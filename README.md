@@ -1,1 +1,1 @@
-# ddtn (Deep Diffiomorphic Transformer Networks)
+# ddtn (Deep Diffeomorphic Transformer Networks)
