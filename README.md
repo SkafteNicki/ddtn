@@ -14,9 +14,6 @@ transformation models are included:
 * CPAB transformations
 * Thin-Plate-Spline (TPS) transformations
 
-This repo also contains code for an ST-layer with affine transformations and a
-ST-layer with both diffeomorphic and affine transformations.
-
 The code is based upon the original implementation of the CPAB transformations by
 Oren Freifeld (Github repo: [cpabDiffeo](https://github.com/freifeld/cpabDiffeo)).
 Additionall, some of the code for doing interpolation is based upon the Tensorflow
@@ -65,5 +62,14 @@ are only combiled for UNIX. If comes up with a way to compile these for windows,
 please let us know.
 
 ## Installation
+
+Clone this reposatory to a directory of your choice
+```
+git clone https://github.com/SkafteNicki/ddtn
+```
+Add this directory to your PYTHONPATH
+```
+export PYTHONPATH=$PYTHONPATH:$YOUR_FOLDER_PATH/ddtn
+```
 
 ## Running code
