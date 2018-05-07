@@ -175,4 +175,6 @@ def tf_CPAB_transformer(points, theta):
         trans_points = tf.reshape(trans_points[:,:2], (n_theta, 2, n_points))
         return trans_points
         
-        
+#%%
+if __name__ == '__main__':
+    pass        

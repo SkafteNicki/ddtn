@@ -1,3 +1,4 @@
 ddtn/data
-ddtn/.spyproject
+.spyproject
 __pycache__
+.pkl

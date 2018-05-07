@@ -9,8 +9,8 @@ Created on Mon Nov 20 09:59:09 2017
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
-from ..helper.utility import get_dir, load_obj, save_obj, make_hashable
-from ..helper.math import null, create_grid
+from ddtn.helper.utility import get_dir, load_obj, save_obj, make_hashable
+from ddtn.helper.math import null, create_grid
 
 #%%
 class setup_CPAB_transformer:
@@ -19,6 +19,7 @@ class setup_CPAB_transformer:
                          valid_outside = False,
                          zero_trace = False, 
                          zero_boundary = True,
+                         name = 'cpab_basis',
                          override = False):
         """
         Main class for setting up cpab_transformer object. The main purpose of
@@ -37,6 +38,9 @@ class setup_CPAB_transformer:
                             is constrained to be zero. NOTE: zero_boundary and
                             valid_outside cannot both be True or False at the
                             same time
+            name:           str, name for the created bases file. Default is
+                            'cpab_basis', but can be used to create multiple
+                            basis files for easy switch between them
             override:       if True, then a new basis will be saved to 
                             'cbap_basis.pkl' even if it already exists
         """
@@ -46,6 +50,9 @@ class setup_CPAB_transformer:
             cannot both be active or deactive at the same time, CHOOSE'''
         
         # Domain information
+        self.valid_outside = valid_outside
+        self.zero_trace = zero_trace
+        self.zero_boundary = zero_boundary
         self.minbound = [-1, -1]
         self.maxbound = [1, 1]
         self.ncx = ncx
@@ -56,24 +63,30 @@ class setup_CPAB_transformer:
         self.Ashape = [2,3]
         self.Asize = np.prod(self.Ashape)
         dir_loc = get_dir(__file__)
-        self.filename = dir_loc + '/../' + "cpab_basis"
+        self.filename = dir_loc + '/../' + name
         
         # Try to load file with basis and vertices
-        try:
+        try:    
             file = load_obj(self.filename)
             if override:
-                raise print('File already exist, but override == True, so updating')
+                raise print('File ' + name + '.pkl already exist' \
+                            'but override == True, ' \
+                            'so updating basis with new settings')
+            # File found -> load information
+            self.valid_outside = file['valid_outside']
+            self.zero_trace = file['zero_trace']
+            self.zero_boundary = file['zero_boundary']
             self.B = file['B']
             self.nConstrains = file['nConstrains']
             self.cells_multiidx = file['cells_multiidx']
             self.cells_verts = file['cells_verts']
-        # Else create it
-        except:
-            print('Creating tessalation with:')
-            print('    nx = {0}, ny = {1}'.format(ncx, ncy))
-            print('    valid outside     = {0}'.format(valid_outside))
-            print('    zero boundary     = {0}'.format(zero_boundary))
-            print('    volume preserving = {0}'.format(zero_trace))
+            self.ncx = file['ncx']
+            self.ncy = file['ncy']
+            self.nC = 4*self.ncx*self.ncy
+            self.inc_x = (self.maxbound[0] - self.minbound[0]) / self.ncx
+            self.inc_y = (self.maxbound[1] - self.minbound[1]) / self.ncy
+            loaded = True
+        except: # Else create it
             # Call tessalation and get vertices of cells
             self.cells_multiidx, self.cells_verts  = self.tessalation()
             
@@ -83,7 +96,7 @@ class setup_CPAB_transformer:
             # If the transformation should be valid outside of the image domain, 
             # calculate the auxiliary points and add them to the edges where a 
             # continuity constrain should be
-            if valid_outside:
+            if self.valid_outside:
                 shared_v_outside, shared_v_idx_outside = self.find_shared_verts_outside()
                 if shared_v_outside.size != 0:
                     self.shared_v = np.concatenate((self.shared_v, shared_v_outside))
@@ -92,18 +105,20 @@ class setup_CPAB_transformer:
             # Create L
             L = self.create_continuity_constrains()
             
-            if zero_trace:
+            # Update L with extra constrains if needed
+            if self.zero_trace:
                 Ltemp = self.create_zero_trace_constrains()
                 L = np.vstack((L, Ltemp))
             
-            if zero_boundary:
+            if self.zero_boundary:
                 Ltemp = self.create_zero_boundary_constrains()
                 L = np.vstack((L, Ltemp))
             
+            # Number of constrains
             self.nConstrains = L.shape[0]
+            
             # Find the null space of L, which is the basis B
             self.B = null(L)
-            print('With these settings, theta.shape = {0}x1'.format(self.B.shape[1]))
             
             # Save all information
             save_obj({
@@ -117,11 +132,30 @@ class setup_CPAB_transformer:
                       'inc_x': self.inc_x,
                       'inc_y': self.inc_y,
                       'minbound': self.minbound, 
-                      'maxbound': self.maxbound
+                      'maxbound': self.maxbound,
+                      'valid_outside': self.valid_outside,
+                      'zero_trace': self.zero_trace,
+                      'zero_boundary': self.zero_boundary
                      }, self.filename)
+            loaded = False
         
         # Get shapes of PA space and CPA space
         self.D, self.d = self.B.shape
+        
+        # Print information about basis
+        print(50*'-')
+        if loaded:
+            print('Loaded file ' + name + '.pkl, ' \
+                  'containing tessalation with settings:')
+        else:
+            print('Creating file ' + name +'.pkl, ' \
+                  'containing tessalation with settings:')
+        print('    nx = {0}, ny = {1}'.format(self.ncx, self.ncy))
+        print('    valid outside     = {0}'.format(self.valid_outside))
+        print('    zero boundary     = {0}'.format(zero_boundary))
+        print('    volume preserving = {0}'.format(zero_trace))
+        print('With these settings, theta.shape = {0}x1'.format(self.B.shape[1]))
+        print(50*'-')
             
         
     def tessalation(self):
@@ -398,14 +432,16 @@ class setup_CPAB_transformer:
         return int(cell_idx)
     
     def sample_grid(self, nb_points = 1000):
-        # Samples nb_points in both directions within the image domain and 
-        # returns a matrix of size (nb_points^2, 2), where each row is point
+        """ Samples nb_points in both directions within the image domain and 
+            returns a matrix of size (nb_points^2, 2), where each row is point
+        """
         return create_grid(self.minbound, self.maxbound, [nb_points, nb_points])
     
     def sample_grid_outside(self, nb_points = 1000, procentage = 0.1):
-        # Similar to sample_grid, however this samples from a extension of the
-        # image domain where procentage * image domain is added around the
-        # original image domain
+        """ Similar to sample_grid, however this samples from a extension of the
+            image domain where procentage * image domain is added around the
+            original image domain
+        """
         x_ext = procentage * (self.maxbound[0] - self.minbound[0])
         y_ext = procentage * (self.maxbound[1] - self.minbound[1])
         return create_grid([self.minbound[0] - x_ext, self.minbound[1] - y_ext],
@@ -413,17 +449,19 @@ class setup_CPAB_transformer:
                            [nb_points, nb_points])
         
     def sample_grid_image(self, imagesize):
+        """ Similar to sample_grid, just with varing sample size in x,y direction """
         return create_grid(self.minbound, self.maxbound, imagesize)
     
     def visualize_tessalation(self, outside = False):
-        # Visualize the tessalation. Outside determine if only the tessalation
-        # is evaluated on the image domain (False) or also outside of the domain
+        """ Visualize the tessalation. Outside determine if only the tessalation
+            is evaluated on the image domain (False) or also outside of the domain
+        """
         nb_points = 500
         if outside:
             points = self.sample_grid_outside(nb_points, 0.2)
         else:
             points = self.sample_grid(nb_points)
-        idx = np.zeros(points.shape[0], dtype = np.int)
+        idx = np.zeros(points.shape[1], dtype = np.int)
         count = 0
         for p in points.T:
             idx[count] = self.find_cell_idx(p)
@@ -436,15 +474,21 @@ class setup_CPAB_transformer:
     
     
     def sample_theta_without_prior(self, n = 1):
-        # Sample a random parameterization vector theta without prior
+        """ Sample a random parameterization vector theta from a multivariate
+            normal distribution with zero mean and 0.5*I covariance matrix """
         theta = 0.5*np.random.multivariate_normal(np.zeros(self.d), np.identity(self.d), n)
         return theta
     
     def calc_v(self, theta, points):
+        """ For a given parametrization theta and a matrix of 2D points, calculate 
+            the corresponding velocity field at all points
+        """
+        # Construct affine transformations
         Avees = self.theta2Avees(theta)
         As = self.Avees2As(Avees)
-
         v = np.zeros((points.shape[1],2))
+        
+        # For all points, find the cell index and calculate velocity
         count = 0
         for p in points.T:
             p = np.append(p,1)
@@ -455,6 +499,7 @@ class setup_CPAB_transformer:
         return v
     
     def visualize_vectorfield(self, theta):
+        """ Visualize the velocity field as two heatmaps """
         nb_points = 500
         points = self.sample_grid(nb_points)
         v = self.calc_v(theta, points)
@@ -477,8 +522,31 @@ class setup_CPAB_transformer:
         plt.colorbar()
         
     def visualize_vectorfield_arrow(self, theta):
+        """ Visualize the velocity field as a single arrow plot """
         nb_points = 50
         points = self.sample_grid(nb_points)
         v = self.calc_v(theta, points)
-        
+        plt.figure()
         plt.quiver(points[0,:], points[1,:], v[:,0], v[:,1])
+        plt.title('Velocity field')
+
+#%%
+if __name__ == '__main__':
+    # Create/load basis
+    s = setup_CPAB_transformer(2, 2, 
+                               valid_outside=True, 
+                               zero_trace=False,
+                               zero_boundary=False,
+                               override=True)
+    
+    # Show tessalation
+    s.visualize_tessalation(outside=True)
+    
+    # Sample random transformation
+    theta = 2*s.sample_theta_without_prior(1)
+    theta = np.reshape(theta, (-1, 1))
+    
+    # Show velocity field
+    s.visualize_vectorfield(theta)
+    s.visualize_vectorfield_arrow(theta)
+    
