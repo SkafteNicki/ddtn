@@ -398,7 +398,7 @@ if __name__ == '__main__':
     sess = tf.Session()
     
     # Calculate result for N matrices with special form
-    N = 10000
+    N = 1000
     A = np.random.normal(size=(N, 2, 3))
     A = np.concatenate((A, np.zeros((N, 1, 3))), axis=1)
     A_tf = tf.cast(A, tf.float32)

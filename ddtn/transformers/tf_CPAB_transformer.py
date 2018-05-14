@@ -8,8 +8,8 @@ Created on Thu Dec 14 11:51:23 2017
 
 #%%
 import tensorflow as tf
-from ..helper.tf_funcs import tf_mymin, tf_repeat_matrix, tf_expm3x3_analytic
-from ..helper.utility import load_basis
+from ddtn.helper.tf_funcs import tf_mymin, tf_repeat_matrix, tf_expm3x3_analytic
+from ddtn.helper.utility import load_basis
 
 #%%
 def tf_findcellidx(points, ncx, ncy, inc_x, inc_y):
