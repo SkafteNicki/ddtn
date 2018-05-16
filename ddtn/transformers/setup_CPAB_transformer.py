@@ -69,7 +69,7 @@ class setup_CPAB_transformer:
         try:    
             file = load_obj(self.filename)
             if override:
-                raise print('File ' + name + '.pkl already exist' \
+                raise print('File ' + name + '.pkl already exist, ' \
                             'but override == True, ' \
                             'so updating basis with new settings')
             # File found -> load information
@@ -476,7 +476,28 @@ class setup_CPAB_transformer:
     def sample_theta_without_prior(self, n = 1):
         """ Sample a random parameterization vector theta from a multivariate
             normal distribution with zero mean and 0.5*I covariance matrix """
-        theta = 0.5*np.random.multivariate_normal(np.zeros(self.d), np.identity(self.d), n)
+        theta = np.random.multivariate_normal(np.zeros(self.d), np.identity(self.d), n)
+        return theta
+    
+    def sample_theta_with_prior(self, n = 1):
+        # Extract centers
+        centers = np.mean(self.cells_verts[:,:,:2], axis=1)
+        
+        # Compute distance between centers
+        norms = np.linalg.norm(centers,axis=1)**2
+        dist_c = norms[:,np.newaxis] + norms[np.newaxis,:] - 2*np.dot(centers, centers.T)
+        
+        # Construct covariance matrix on original parameter space
+        cov_avees = np.zeros((6*self.nC, 6*self.nC))
+        for i in range(self.nC):
+            for j in range(self.nC):
+                    cov_avees[6*i:6*i+6, 6*j:6*j+6] = np.diag(np.repeat(np.exp(-dist_c[i,j]),6))
+        
+        # Calculate covariance matrix for theta space
+        cov_theta = np.dot(self.B.T, np.dot(cov_avees, self.B))
+        
+        # Sample values
+        theta = np.random.multivariate_normal(np.zeros(self.d), cov_theta, n)
         return theta
     
     def calc_v(self, theta, points):
@@ -523,11 +544,13 @@ class setup_CPAB_transformer:
         
     def visualize_vectorfield_arrow(self, theta):
         """ Visualize the velocity field as a single arrow plot """
-        nb_points = 50
+        nb_points = 20
         points = self.sample_grid(nb_points)
         v = self.calc_v(theta, points)
         plt.figure()
-        plt.quiver(points[0,:], points[1,:], v[:,0], v[:,1])
+        plt.quiver(points[0,:], points[1,:], v[:,0], v[:,1], scale=5)
+        plt.axis([-1.5, 1.5, -1.5, 1.5])
+        plt.axis('equal')
         plt.title('Velocity field')
 
 #%%
@@ -543,7 +566,7 @@ if __name__ == '__main__':
     s.visualize_tessalation(outside=True)
     
     # Sample random transformation
-    theta = 2*s.sample_theta_without_prior(1)
+    theta = s.sample_theta_without_prior(1)
     theta = np.reshape(theta, (-1, 1))
     
     # Show velocity field

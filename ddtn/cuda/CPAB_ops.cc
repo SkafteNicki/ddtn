@@ -23,7 +23,6 @@ REGISTER_OP("CalcTrans")
     .Input("inc_x: float")
     .Input("inc_y: float")
     .Output("newpoints: float")     // n_theta x 2 x nP
-    .Output("index_path: int32")
     .Doc(R"doc(CPAB transformation implementation)doc");
     
 REGISTER_OP("CalcGrad")
@@ -61,11 +60,6 @@ class CalcTransCPU : public OpKernel {
             std::initializer_list< int64 > s0 = {batch_size, 2, nP};
             OP_REQUIRES_OK(context, context->allocate_output(0, TensorShape(s0), &newpoints_out));            
             typename TTypes<float, NDIMS>::Tensor newpoints = newpoints_out->tensor<float, NDIMS>();
-            
-            Tensor* index_out = NULL;
-            std::initializer_list< int64 > s1 = {batch_size, nP, 50};
-            OP_REQUIRES_OK(context, context->allocate_output(1, TensorShape(s1), &index_out));
-            typename TTypes<int, NDIMS>::Tensor index = index_out->tensor<int, NDIMS>();
                    
             // Setup data view
             typename TTypes<float>::ConstMatrix points = points_in.matrix<float>();
@@ -102,8 +96,6 @@ class CalcTransCPU : public OpKernel {
                         
                         point[0] = point_updated[0];
                         point[1] = point_updated[1];
-                        
-                        index(t,i,n) = cellidx;
                     }
                         
                     // Copy to output
@@ -194,7 +186,7 @@ class CalcTransCPU : public OpKernel {
         
 // Forward decleration of kernel launcher 
 void calcTrans_kernel_launcher(const GPUDevice& device, const int nP, const int batch_size,
-                                float* newpoints, int* index, const float* points, 
+                                float* newpoints, const float* points, 
                                 const float* Trels, const int* nStepSolver,
                                 const int* ncx, const int* ncy, 
                                 const float* inc_x, const float* inc_y);
@@ -222,12 +214,7 @@ class CalcTransGPU : public OpKernel {
             std::initializer_list< int64 > s = {batch_size, 2, nP};
             OP_REQUIRES_OK(context, context->allocate_output(0, TensorShape(s), &newpoints_out));            
             float* newpoints = newpoints_out->flat<float>().data();
-            
-            Tensor* index_out = NULL;
-            std::initializer_list< int64 > s1 = {batch_size, nP, 50}; //TODO: This should be general
-            OP_REQUIRES_OK(context, context->allocate_output(1, TensorShape(s1), &index_out));
-            int* index = index_out->flat<int>().data();
-            
+                        
             // Setup data view
             const float* points = points_in.flat<float>().data();
             const float* Trels = Trels_in.flat<float>().data();
@@ -242,18 +229,18 @@ class CalcTransGPU : public OpKernel {
 
             // Launch kernel
             calcTrans_kernel_launcher(eigen_device, nP, batch_size,
-                                      newpoints, index, points, Trels,
+                                      newpoints, points, Trels,
                                       nStepSolver, ncx, ncy, inc_x, inc_y);
             
             return;
         }
 };
 
-void calcT_batch_grad_kernel_launcher(    const GPUDevice& device, 
+void calcT_batch_grad_kernel_launcher(  const GPUDevice& device, 
                                         const int n_theta, const int d, const int nP, const int nC,
                                         float* grad, const float* points, const float* As, const float* Bs,
                                         const int* nStepSolver, const int* ncx, const int* ncy, 
-                                        const float* inc_x, const float    * inc_y);
+                                        const float* inc_x, const float* inc_y);
 
 class CalcGradGPU : public OpKernel {
     public:
@@ -265,35 +252,35 @@ class CalcGradGPU : public OpKernel {
             const Tensor& As_in = context->input(1);
             const Tensor& Bs_in = context->input(2);
             const Tensor& nStepSolver_in = context->input(3);
-            const Tensor& ncx_in = context->input(5);
-            const Tensor& ncy_in = context->input(6);
-            const Tensor& inc_x_in = context->input(7);
-            const Tensor& inc_y_in = context->input(8);
+            const Tensor& ncx_in = context->input(4);
+            const Tensor& ncy_in = context->input(5);
+            const Tensor& inc_x_in = context->input(6);
+            const Tensor& inc_y_in = context->input(7);
 
             // Create and allocate output tensor
             const int n_theta = As_in.dim_size(0);
             const int d = Bs_in.dim_size(0);
             const int nP = points_in.dim_size(1);
-                        const int nC = Bs_in.dim_size(1);
+            const int nC = Bs_in.dim_size(1);
             
             Tensor* grad_out = NULL;
             std::initializer_list< int64 > s = {d, n_theta, 2, nP};
             OP_REQUIRES_OK(context, context->allocate_output(0, TensorShape(s), &grad_out));            
             float* grad = (grad_out->flat<float>()).data();
-
-            // Setup data view
-                        const float* points = (points_in.flat<float>()).data();
-            const float* As = (As_in.flat<float>()).data();
-                        const float* Bs = (Bs_in.flat<float>()).data();
-            const int* nStepSolver = (nStepSolver_in.flat<int>()).data();
-            const int* ncx = (ncx_in.flat<int>()).data();
-            const int* ncy = (ncy_in.flat<int>()).data();
-            const float* inc_x = (inc_x_in.flat<float>()).data();
-            const float* inc_y = (inc_y_in.flat<float>()).data();
             
+            // Setup data view
+            const float* points = (points_in.flat<float>()).data();
+            const float* As = (As_in.flat<float>()).data();            
+            const float* Bs = (Bs_in.flat<float>()).data();            
+            const int* nStepSolver = (nStepSolver_in.flat<int>()).data();            
+            const int* ncx = (ncx_in.flat<int>()).data();            
+            const int* ncy = (ncy_in.flat<int>()).data();            
+            const float* inc_x = (inc_x_in.flat<float>()).data();            
+            const float* inc_y = (inc_y_in.flat<float>()).data();
+                       
             // Get GPU information
             const GPUDevice& eigen_device = context->eigen_device<GPUDevice>();
-
+            
             // Launch kernel
             calcT_batch_grad_kernel_launcher(eigen_device, n_theta, d, nP, nC,
                                              grad, points, As, Bs,

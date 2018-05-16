@@ -2,7 +2,6 @@
 #define EIGEN_USE_GPU
 #include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "cuda_kernel_helper.h"
-//#include "tensorflow/core/util/cuda_kernel_helper.h"
 
 __device__ int mymin(int a, double b) {
     return !(b<a)?a:round(b);
@@ -96,7 +95,7 @@ __device__ void A_times_b_linear(float x[], const float* A, float* b) {
 }
 
 __global__ void calcTrans_kernel(const int nP, const int batch_size,
-                                 float* newpoints, int* index, const float* points,
+                                 float* newpoints, const float* points,
                                  const float* Trels, const int* nStepSolver,
                                  const int* ncx, const int* ncy,
                                  const float* inc_x, const float* inc_y) {
@@ -128,8 +127,6 @@ __global__ void calcTrans_kernel(const int nP, const int batch_size,
 
             point[0] = point_updated[0];
             point[1] = point_updated[1];
-            
-            index[nStepSolver[0]*nP*batch_index + nStepSolver[0]*point_index + n] = cellidx;
         }
     
         // Copy to output
@@ -140,7 +137,7 @@ __global__ void calcTrans_kernel(const int nP, const int batch_size,
 }
 
 void calcTrans_kernel_launcher(const GPUDevice& d, const int nP, const int batch_size,
-                               float* newpoints, int* index, const float* points, 
+                               float* newpoints, const float* points, 
                                const float* Trels, const int* nStepSolver, 
                                const int* ncx, const int* ncy,
                                const float* inc_x, const float* inc_y) {
@@ -151,7 +148,7 @@ void calcTrans_kernel_launcher(const GPUDevice& d, const int nP, const int batch
     
     // Launch kernel with configuration    
     calcTrans_kernel<<<bc, tpb, 0, d.stream()>>>(nP, batch_size,
-                                                 newpoints, index,
+                                                 newpoints, 
                                                  points, Trels, nStepSolver,
                                                  ncx, ncy, inc_x, inc_y);
     
