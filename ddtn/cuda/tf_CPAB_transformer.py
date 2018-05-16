@@ -43,7 +43,7 @@ def _calc_trans(points, theta):
             using the parametrization vector theta[i].
         o
     """
-    with tf.variable_scope('calc_trans'):
+    with tf.name_scope('calc_trans'):
         # Make sure that both inputs are in float32 format
         points = tf.cast(points, tf.float32) # format [2, nb_points]
         theta = tf.cast(theta, tf.float32) # format [n_theta, dim]
@@ -82,7 +82,7 @@ def _calc_trans(points, theta):
         Trels = tf.reshape(Trels, shape=(n_theta, nC, 2, 3))
 
         # Call the dynamic library
-        with tf.variable_scope('calc_trans_op'):
+        with tf.name_scope('calc_trans_op'):
 	        newpoints = transformer_op(points, Trels, nStepSolver, ncx, ncy, inc_x, inc_y)
         return newpoints
 
@@ -110,7 +110,7 @@ def _calc_grad(op, grad): #grad: n_theta x 2 x nP
         of each element in all theta vectors.
         
     """
-    with tf.variable_scope('calc_grad'):
+    with tf.name_scope('calc_grad'):
         # Grap input
         points = op.inputs[0] # 2 x nP
         theta = op.inputs[1] # n_theta x d
@@ -141,7 +141,7 @@ def _calc_grad(op, grad): #grad: n_theta x 2 x nP
         As = tf.reshape(Avees, shape = (n_theta, nC, 2, 3)) # n_theta x nC x 2 x 3
         
         # Call cuda code
-        with tf.variable_scope('calcT_batch_grad_operator'):
+        with tf.name_scope('calcT_batch_grad_operator'):
             gradient = grad_op(points, As, Bs, nStepSolver,
                                ncx, ncy, inc_x, inc_y) # gradient: d x n_theta x 2 x n
         
@@ -150,14 +150,57 @@ def _calc_grad(op, grad): #grad: n_theta x 2 x nP
         gradient = tf.transpose(gradient)
                                   
         return [None, gradient]
+    
+#%%
+def _calc_grad_numeric(op, grad): #grad: n_theta x 2 x nP
+    """ Similar to the _calc_grad(...) function above. Only difference is that 
+        this function does a finite difference of the gradient by calling the
+        _calc_trans(...) again and again for small permutations of the input
+        theta vector, and then compare to the actual value of theta.
+        Arguments and output is the same _calc_grad(...).
+    """
+    points = op.inputs[0] # 2 x n
+    theta = op.inputs[1] # n_theta x d
+    
+    # Finite difference permutation size
+    h = tf.cast(0.01, tf.float32)
+    
+    # Base function evaluation
+    f0 = _calc_trans(points, theta) # n_theta x 2 x nP
+    
+    gradient = [ ]
+    for i in range(theta.get_shape()[1].value):
+        # Add small permutation to i element in theta
+        temp = tf.concat([theta[:,:i], tf.expand_dims(theta[:,i]+h,1), theta[:,(i+1):]], 1)
+        
+        # Calculate new function value
+        f1 = _calc_trans(points, temp) # n_theta x 2 x nP
+        
+        # Finite difference
+        diff = (f1 - f0) / h # n_theta x 2 x nP
+        
+        if i != 0:
+            # Gradient
+            gradient = tf.concat([gradient, tf.expand_dims(tf.reduce_sum(grad * diff, axis=[1,2]), 1)], 1)
+        else:
+            gradient = tf.expand_dims(tf.reduce_sum(grad * diff, axis=[1,2]), 1)
+
+    return [None, gradient]        
+    
+#%%
+@function.Defun(tf.float32, tf.float32, func_name='tf_CPAB_transformer', python_grad_func=_calc_grad)
+def tf_CPAB_transformer(points, theta):
+    transformed_points = _calc_trans(points, theta)
+    return transformed_points
 
 #%%
-#@function.Defun(tf.float32, tf.float32, func_name = 'tf_CPAB_transformer', python_grad_func = _calc_grad)
-#def tf_CPAB_transformer(points, theta):
-#    transformed_points = _calc_trans(points, theta)
-#    return transformed_points
-
-
+@function.Defun(tf.float32, tf.float32, func_name = 'tf_CPAB_transformer_numeric_grad', python_grad_func = _calc_grad_numeric)
+def tf_CPAB_transformer_numeric_grad(points, theta):
+    """ Similar to tf_CPAB_transformer(...) where the analytic gradient is have
+        been replaced with a numeric finite difference gradient
+    """
+    transformed_points = _calc_trans(points, theta)
+    return transformed_points
 
 #%%
 if __name__ == '__main__':
@@ -172,40 +215,34 @@ if __name__ == '__main__':
                                override=True)
     
     # Sample parametrization and grid
-    theta = 0.3*s.sample_theta_without_prior(1)
+    theta = 0.5*s.sample_theta_without_prior(1)
     points = s.sample_grid(20)
     
     # Convert to tf tensors
-    theta_tf = tf.cast(theta, tf.float32, name='theta_cast')
-    points_tf = tf.cast(points, tf.float32, name='point_cast')
+    theta_tf = tf.cast(theta, tf.float32)    
+    points_tf = tf.cast(points, tf.float32)
     
-    # Run computations
-    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-    #newpoints = sess.run(tf_CPAB_transformer(points_tf, theta_tf))
-    #newpoints = np.reshape(newpoints, points.shape)
+    # Create computaitons
+    newpoints_ana_tf = tf_CPAB_transformer(points_tf, theta_tf)
+    newpoints_num_tf = tf_CPAB_transformer_numeric_grad(points_tf, theta_tf)
+    grad_ana_tf = tf.gradients(newpoints_ana_tf, [theta_tf])[0]
+    grad_num_tf = tf.gradients(newpoints_num_tf, [theta_tf])[0]
     
-    # Show deformation
-    #fig = plt.figure()
-    #plt.plot(points[0], points[1], 'b.', label='original grid')
-    #plt.plot(newpoints[0], newpoints[1], 'r.', label='deformed grid')
-    #plt.legend(fontsize=15)
+    sess = tf.Session()
+    p1, p2, g1, g2 = sess.run([newpoints_ana_tf, newpoints_num_tf, 
+                              grad_ana_tf, grad_num_tf])
     
-    # Show velocity field
-    #s.visualize_vectorfield_arrow(theta.flatten())
-#    
-    # Calculate gradient
-    #newpoints = tf_CPAB_transformer(points_tf, theta_tf)
-    #grad_ana = tf.gradients(newpoints, [theta_tf])[0]
-    #res = sess.run(grad_ana)
-#    #grad_num = sess.run(tf.gradients(tf_CPAB_transformer_numeric_grad(points_tf, 
-#    #                                theta_tf), [theta_tf])[0])
-#    
-    class op:
-        def __init__(self, inputs):
-            self.inputs = inputs
-            
-    operation = op([points_tf, theta_tf])
-    grad = tf.ones((20, 1, 2, 20*20), tf.float32)
-    gradient = _calc_grad(operation, grad)
-    res = sess.run(gradient[1])
+    print('Analytic gradient:')
+    print(g1.round(3))
+    print('Numeric gradient:')
+    print(g2.round(3))
+    print('Difference:', (np.linalg.norm(g1 - g2) / np.linalg.norm(g1)).round(3))
+    
+    # Show deformation and velocity field
+    fig = plt.figure()
+    plt.plot(points[0], points[1], 'b.', label='original grid')
+    plt.plot(p1[0,0], p1[0,1], 'r.', label='deformed grid')
+    plt.legend(fontsize=15)
+    s.visualize_vectorfield_arrow(theta.flatten())
+    plt.show()
     
