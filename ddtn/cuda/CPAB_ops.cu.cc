@@ -248,7 +248,7 @@ __global__ void  calcGrad_kernel(dim3 nthreads, const int n_theta, const int d, 
                         q[0] += uMid[0] * h;
                         q[1] += uMid[1] * h;
                 
-                        // Ubcpdate gradient
+                        // Update gradient
                         grad[dim_index * boxsize + index] = q[0];
                         grad[dim_index * boxsize + index + nP] = q[1];
                         
@@ -263,13 +263,12 @@ __global__ void  calcGrad_kernel(dim3 nthreads, const int n_theta, const int d, 
 }
 
 
-void calcT_batch_grad_kernel_launcher(const GPUDevice& device, 
-                                      const int n_theta, const int d, const int nP, const int nC,
-                                      float* grad, const float* points, const float* As, const float* Bs,
-                                      const int* nStepSolver, const int* ncx, const int* ncy, 
-                                      const float* inc_x, const float* inc_y){
+void calcGrad_kernel_launcher(const GPUDevice& device, 
+                              const int n_theta, const int d, const int nP, const int nC,
+                              float* grad, const float* points, const float* As, const float* Bs,
+                              const int* nStepSolver, const int* ncx, const int* ncy, 
+                              const float* inc_x, const float* inc_y){
 
-    
     // Get GPU 3D configuration
 
     Cuda3DLaunchConfig config = GetCuda3DLaunchConfigOWN(n_theta, nP, d);
