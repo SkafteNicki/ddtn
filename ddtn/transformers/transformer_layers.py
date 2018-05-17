@@ -10,7 +10,7 @@ Created on Mon Nov 27 09:04:35 2017
 import tensorflow as tf
 from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate
 from ddtn.helper.tf_funcs import tf_TPS_system_solver, tf_expm3x3_analytic
-#from ddtn.cuda.tf_CPAB_transformer import tf_CPAB_transformer_old as tf_CPAB_transformer
+from ddtn.cuda.tf_CPAB_transformer import tf_CPAB_transformer
 
 #%%
 def ST_Affine_transformer(U, theta, out_size):
@@ -387,3 +387,35 @@ def ST_TPS_transformer_batch(U, thetas, out_size, tps_size = [4,4]):
         # Call transformer on repeated input
         V = ST_TPS_transformer(input_repeated, thetas, out_size, tps_size)
         return V 
+
+#%%
+if __name__ == '__main__':
+    import numpy as np
+    from ddtn.helper.utility import get_cat, show_images
+    
+    # Load im and create a batch of imgs
+    N = 15
+    im = get_cat()
+    im = np.tile(im, (N, 1, 1, 1))
+   
+    # Create transformation vector
+    theta = np.tile(np.array([1,0,0,0,1,0], np.float32), (N, 1))
+    theta[:,2] = np.random.normal(scale=0.5, size=N)
+    theta[:,5] = np.random.normal(scale=0.5, size=N)
+    
+    # Cast to tensorflow and normalize values
+    im_tf = tf.cast(im, tf.float32)
+    theta_tf = tf.cast(theta, tf.float32)
+    
+    # Transformer imgs
+    trans_im = ST_Affine_transformer(im_tf, theta_tf, (1200, 1600))
+
+    # Run computations
+    sess = tf.Session()
+    out_im = sess.run(trans_im)
+    
+    show_images(out_im, cols=3)
+    
+    
+    
+    

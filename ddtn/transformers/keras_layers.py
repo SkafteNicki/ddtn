@@ -37,3 +37,8 @@ class SpatialAffineLayer(BaseTransformerLayer):
         theta = self.locnet.call(X)
         output = ST_Affine_transformer(X, theta, self.output_size)
         return output
+
+
+#%%
+if __name__ == '__main__':
+    pass

@@ -57,9 +57,17 @@ def tf_mymin(x, y):
         return tf.where(tf.less(x,y), x, tf.round(y))
 
 #%%
+def tf_img_normalize(im):
+    """ Normalize the image values to the 0..1 domain for each image in a batch"""
+    with tf.name_scope('img_normalize'):
+        im = im - tf.reduce_min(im, axis=[1,2,3], keepdims=True)
+        im = im / tf.reduce_max(im, axis=[1,2,3], keepdims=True)
+        return im
+
+#%%
 def tf_interpolate(im, x, y, out_size):
     """ Tensorflow implementation that interpolates the points (x,y) using the
-        values in im. 
+        values in im.
     Arguments:
         im: 4D-`Tensor` [N_batch, height, width, n_channels]. Input images.
         x: `Vector` [N_batch*out_size[0]*out_size[1], ]. x-coordinates for the
@@ -73,6 +81,9 @@ def tf_interpolate(im, x, y, out_size):
             with the new interpolated images
     """
     with tf.name_scope('interpolate'):
+        # Normalize image values
+        im = tf_img_normalize(im)
+        
         # Constants
         n_batch = tf.shape(im)[0] # (often) unknown size
         _, height, width, n_channels = im.shape.as_list() # known sizes
@@ -133,8 +144,9 @@ def tf_interpolate(im, x, y, out_size):
         wd = tf.expand_dims(((x-x0_f) * (y-y0_f)), 1)
         newim = tf.add_n([wa*Ia, wb*Ib, wc*Ic, wd*Id])
         
-        # Reshape into image format
+        # Reshape into image format and take care of numeric underflow/overflow
         newim = tf.reshape(newim, (n_batch, out_height, out_width, n_channels))
+        newim = tf.clip_by_value(newim, 0.0, 1.0)
         return newim
 
 #%%

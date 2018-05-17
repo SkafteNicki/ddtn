@@ -11,6 +11,8 @@ try:
 except:
     import pickle as pkl
 import os
+import matplotlib.pyplot as plt
+import numpy as np
 
 #%%
 def make_hashable(arr):
@@ -52,3 +54,44 @@ def load_basis():
     except:
         raise ValueError('call setup_CPAB.py first')
     return basis
+
+#%%
+def get_cat():
+    direc = get_dir(__file__)
+    return plt.imread(direc + '/../cat.jpg')
+
+#%%
+def show_images(images, cols=1, scaling=False):
+    """ Display a list of images in a single figure with matplotlib.
+    
+    Arguments
+        images: List/tensor of np.arrays compatible with plt.imshow.
+    
+        cols (Default = 1): Number of columns in figure (number of rows is 
+                            set to np.ceil(n_images/float(cols))).
+            
+        scaling (Default = False): If True, will rescale the figure by the
+                number of images. Good if one want to show many.
+    """
+    n_images = len(images)
+    rows = np.ceil(n_images/float(cols))
+    fig = plt.figure()
+    for n, image in enumerate(images):
+        a = fig.add_subplot(cols, rows, n + 1)
+        if image.ndim == 2: plt.gray()
+        a.imshow(image)
+        a.axis('on')
+        a.axis('equal')
+        a.set_xticklabels([])
+        a.set_yticklabels([])
+    print(fig.get_size_inches())
+    if scaling: fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
+    fig.subplots_adjust(wspace=0, hspace=0)
+    plt.show()
+    
+#%%
+if __name__ == '__main__':
+    im = get_cat()
+    im = np.tile(im, (10, 1, 1, 1))
+    show_images(im, cols=3, scaling=False)
+    

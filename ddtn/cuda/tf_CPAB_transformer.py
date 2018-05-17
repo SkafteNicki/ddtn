@@ -16,7 +16,6 @@ from ddtn.helper.tf_funcs import tf_repeat_matrix, tf_expm3x3_analytic
 #%% Load dynamic module
 def load_dynamic_modules():
     dir_path = get_dir(__file__)
-    print('Loading file: ', dir_path + '/./CPAB_ops.so')
     transformer_module = tf.load_op_library(dir_path + '/./CPAB_ops.so')
     transformer_op = transformer_module.calc_trans
     grad_op = transformer_module.calc_grad

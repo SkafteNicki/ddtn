@@ -153,8 +153,8 @@ class setup_CPAB_transformer:
                   'containing tessalation with settings:')
         print('    nx = {0}, ny = {1}'.format(self.ncx, self.ncy))
         print('    valid outside     = {0}'.format(self.valid_outside))
-        print('    zero boundary     = {0}'.format(zero_boundary))
-        print('    volume preserving = {0}'.format(zero_trace))
+        print('    zero boundary     = {0}'.format(self.zero_boundary))
+        print('    volume preserving = {0}'.format(self.zero_trace))
         print('With these settings, theta.shape = {0}x1'.format(self.B.shape[1]))
         print(50*'-')
             
@@ -585,7 +585,7 @@ if __name__ == '__main__':
                                valid_outside=True, 
                                zero_trace=False,
                                zero_boundary=False,
-                               override=True)
+                               override=False)
     
     # Show tessalation
     s.visualize_tessalation(outside=True)
