@@ -74,11 +74,10 @@ def tf_interpolate(im, x, y, out_size):
     """
     with tf.name_scope('interpolate'):
         # Constants
-        n_batch = tf.shape(im)[0]
-        height = tf.shape(im)[1]
-        width = tf.shape(im)[2]
-        n_channels = tf.shape(im)[3]
+        n_batch = tf.shape(im)[0] # (often) unknown size
+        _, height, width, n_channels = im.shape.as_list() # known sizes
 
+        # Cast value to float dtype
         x = tf.cast(x, 'float32')
         y = tf.cast(y, 'float32')
         height_f = tf.cast(height, 'float32')
@@ -137,7 +136,6 @@ def tf_interpolate(im, x, y, out_size):
         # Reshape into image format
         newim = tf.reshape(newim, (n_batch, out_height, out_width, n_channels))
         return newim
-
 
 #%%
 def tf_meshgrid(height, width):

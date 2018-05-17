@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ddtn.helper.utility import get_dir, load_obj, save_obj, make_hashable
 from ddtn.helper.math import null, create_grid
+from scipy.linalg import expm as scipy_expm
 
 #%%
 class setup_CPAB_transformer:
@@ -497,6 +498,30 @@ class setup_CPAB_transformer:
             count += 1
         
         return v
+    
+    def calcTrans(self, theta, points):
+        nP = points.shape[1]
+        nstep = 50
+        dT = 1.0/nstep
+        
+        # Transform points to homogeneuos coordinates
+        newpoints = np.concatenate((points, np.ones((1, nP))), axis=0)
+        
+        # Construct affine transformations
+        Avees = self.theta2Avees(theta)
+        As = self.Avees2As(Avees)
+        Asquare = self.As2squareAs(As)
+        
+        # Construct mappings
+        Trels = np.array([scipy_expm(dT*Asquare[i]) for i in range(self.nC)])
+        
+        # Transform points using the mappings
+        for i in range(nP):
+            for t in range(nstep):
+                idx = self.find_cell_idx(newpoints[:,i])
+                newpoints[:,i] = Trels[idx].dot(newpoints[:,i])
+        
+        return newpoints[:2,:]
     
     def visualize_vectorfield(self, theta):
         """ Visualize the velocity field as two heatmaps """
