@@ -3,3 +3,5 @@ ddtn/data
 __pycache__
 *.pkl
 *.gz
+ddtn/cuda/CPAB_ops.cu.o
+ddtn/cuda/CPAB_ops.so

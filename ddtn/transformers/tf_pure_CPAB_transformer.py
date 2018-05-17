@@ -76,7 +76,7 @@ def tf_findcellidx(points, ncx, ncy, inc_x, inc_y):
         return idx
 
 #%%
-def tf_CPAB_transformer(points, theta):
+def tf_pure_CPAB_transformer(points, theta):
     """ CPAB transformer in pure tensorflow. Transform the input points by
         repeatly appling the matrix-exponentials parametrized by theta. This
         function should automatic be able to calculate the gradient of the

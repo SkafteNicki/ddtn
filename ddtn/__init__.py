@@ -22,3 +22,6 @@ from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer_ba
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer_batch
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer_batch
 from ddtn.transformers.transformer_layers import ST_TPS_transformer_batch
+
+# Fast access to keras layers
+from ddtn.transformers.keras_layers import SpatialAffineLayer

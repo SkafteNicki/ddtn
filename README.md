@@ -73,3 +73,17 @@ export PYTHONPATH=$PYTHONPATH:$YOUR_FOLDER_PATH/ddtn
 ```
 
 ## Running code
+
+
+## Known bugs
+1 "Executor failed to create kernel. Not found: Op type not registered 
+'tf_CPAB_transformer' in binary running on HedonismeBot. Make sure the Op and 
+Kernel are registered in the binary running in this process"
+   `tf.Defun` seems to be working but still give out this error message. Should
+    probably try to find a replacement for `tf.Defun`
+   - This error has something to do with `tf.Defun`, but the code seems to run.
+   It is probably due to the fact that tensorflow sessions freeze the current
+   graph. Will try to find a replacement for `tf.Defun`. Look into `tf.RegisterGradient`
+   at some point.
+
+
