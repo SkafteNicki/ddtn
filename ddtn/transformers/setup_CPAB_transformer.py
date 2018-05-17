@@ -17,9 +17,9 @@ from scipy.linalg import expm as scipy_expm
 class setup_CPAB_transformer:
     def __init__(self,   ncx = 2, 
                          ncy = 2, 
-                         valid_outside = False,
+                         valid_outside = True,
                          zero_trace = False, 
-                         zero_boundary = True,
+                         zero_boundary = False,
                          name = 'cpab_basis',
                          override = False):
         """
@@ -123,7 +123,9 @@ class setup_CPAB_transformer:
             
             # Save all information
             save_obj({
-                      'B': self.B, 
+                      'B': self.B,
+                      'D': self.B.shape[0],
+                      'd': self.B.shape[1],
                       'nConstrains': self.nConstrains, 
                       'cells_multiidx': self.cells_multiidx,
                       'cells_verts': self.cells_verts,

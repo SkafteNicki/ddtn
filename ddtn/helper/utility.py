@@ -61,7 +61,7 @@ def get_cat():
     return plt.imread(direc + '/../cat.jpg')
 
 #%%
-def show_images(images, cols=1, scaling=False):
+def show_images(images, cols=1, title=None, scaling=False):
     """ Display a list of images in a single figure with matplotlib.
     
     Arguments
@@ -69,6 +69,8 @@ def show_images(images, cols=1, scaling=False):
     
         cols (Default = 1): Number of columns in figure (number of rows is 
                             set to np.ceil(n_images/float(cols))).
+        
+        title: One main title for the hole figure
             
         scaling (Default = False): If True, will rescale the figure by the
                 number of images. Good if one want to show many.
@@ -76,6 +78,7 @@ def show_images(images, cols=1, scaling=False):
     n_images = len(images)
     rows = np.ceil(n_images/float(cols))
     fig = plt.figure()
+    if type(title)==str: fig.suptitle(title, fontsize=20)
     for n, image in enumerate(images):
         a = fig.add_subplot(cols, rows, n + 1)
         if image.ndim == 2: plt.gray()
@@ -84,7 +87,6 @@ def show_images(images, cols=1, scaling=False):
         a.axis('equal')
         a.set_xticklabels([])
         a.set_yticklabels([])
-    print(fig.get_size_inches())
     if scaling: fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
     fig.subplots_adjust(wspace=0, hspace=0)
     plt.show()

@@ -8,9 +8,11 @@ Created on Mon Nov 27 09:04:35 2017
 
 #%%
 import tensorflow as tf
-from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate
+import numpy as np
+from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate, tf_TPS_meshgrid
 from ddtn.helper.tf_funcs import tf_TPS_system_solver, tf_expm3x3_analytic
 from ddtn.cuda.tf_CPAB_transformer import tf_CPAB_transformer
+from ddtn.helper.utility import load_basis
 
 #%%
 def ST_Affine_transformer(U, theta, out_size):
@@ -82,7 +84,6 @@ def ST_Affine_diffio_transformer(U, theta, out_size):
         grid = tf.tile(tf.expand_dims(grid, 0), [num_batch, 1, 1])
         
         # Take matrix exponential -> creates invertable affine transformation
-        theta = tf.concat((theta, tf.zeros((num_batch, 1, 3))), axis=1)
         theta = tf_expm3x3_analytic(theta)
         theta = theta[:,:2,:]
         
@@ -203,17 +204,16 @@ def ST_TPS_transformer(U, theta, out_size, tps_size = [4,4]):
     with tf.name_scope('ST_TPS_transformer'):
         num_batch = tf.shape(theta)[0]
         
+        # Solve TPS system
+        target = tf.reshape(theta, (-1, tps_size[0]*tps_size[1], 2))
+        source = tf.transpose(tf_meshgrid(tps_size[0], tps_size[1])[:2,:]) # [np, 2]
+        source = tf.tile(tf.expand_dims(source, 0), [num_batch, 1, 1]) # [bs, np, 2]
+        T = tf_TPS_system_solver(source, target) # [bs, 2, np]
+        
         # Create grid of points
         out_height = out_size[0]
         out_width = out_size[1]
-        grid = tf_meshgrid(out_height, out_width)
-        grid = tf.tile(tf.expand_dims(grid, 0), [num_batch, 1, 1])
-        
-        # Solve TPS system
-        target = tf.reshape(theta, (-1, tps_size[0]*tps_size[1], 2))
-        source = tf_meshgrid(tps_size[0], tps_size[1])
-        source = tf.tile(tf.expand_dims(source, 0), [num_batch, 1, 1])
-        T = tf_TPS_system_solver(source, target)
+        grid = tf_TPS_meshgrid(out_height, out_width, source)
         
         # Transform points with TPS kernel
         T_g = tf.matmul(T, grid)
@@ -389,8 +389,72 @@ def ST_TPS_transformer_batch(U, thetas, out_size, tps_size = [4,4]):
         return V 
 
 #%%
+def get_transformer(transformer_name='affine'):
+    lookup = {'affine': ST_Affine_transformer,
+              'affine_diffeo': ST_Affine_diffio_transformer,
+              'homografy': ST_Homografy_transformer,
+              'CPAB': ST_CPAB_transformer,
+              'TPS': ST_TPS_transformer
+             }
+    assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
+            + ', '.join([k for k in lookup.keys()])
+    return lookup[transformer_name]
+
+#%%
+def get_transformer_dim(transformer_name='affine'):
+    lookup = {'affine': 6,
+              'affine_diffeo': 6,
+              'homografy': 9,
+              'CPAB': load_basis()['d'],
+              'TPS': 32
+             }
+    assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
+            + ', '.join([k for k in lookup.keys()])
+    return lookup[transformer_name]
+
+#%%
+def get_random_theta(N, transformer_name='affine'):
+    dim = get_transformer_dim(transformer_name)
+    
+    if transformer_name == 'affine':
+        theta = np.zeros((N, dim))
+        theta[:,0] = np.abs(np.random.normal(loc=1, scale=0.2, size=N))
+        theta[:,4] = np.abs(np.random.normal(loc=1, scale=0.2, size=N))
+        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        
+    elif transformer_name == 'affine_diffeo':
+        theta = np.zeros((N, dim))
+        theta[:,0] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,4] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+    
+    elif transformer_name == 'homografy':
+        theta = np.zeros((N, dim))
+        theta[:,0] = np.random.normal(loc=1, scale=0.2, size=N)
+        theta[:,4] = np.random.normal(loc=1, scale=0.2, size=N)
+        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,6] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,7] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
+        theta[:,8] = np.ones((N,))
+        
+    elif transformer_name == 'CPAB':
+        theta = 0.5*np.random.normal(size=(N, dim))
+    
+    elif transformer_name == 'TPS':
+        x,y=np.meshgrid(np.linspace(-1,1,4), np.linspace(-1,1,4))
+        points = np.concatenate((x.reshape((1,-1)),y.reshape((1,-1))), axis=0)
+        theta = np.tile(points.T.reshape(1,-1), (N, 1)) + 0.1*np.random.normal(size=(N, dim))
+    
+    return theta    
+
+#%%
 if __name__ == '__main__':
-    import numpy as np
     from ddtn.helper.utility import get_cat, show_images
     
     # Load im and create a batch of imgs
