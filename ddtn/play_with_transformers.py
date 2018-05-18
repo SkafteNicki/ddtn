@@ -6,7 +6,7 @@ Created on Wed May 16 17:27:39 2018
 """
 #%%
 from ddtn.transformers.setup_CPAB_transformer import setup_CPAB_transformer
-from ddtn.transformers.transformer_layers import get_transformer, get_random_theta
+from ddtn.transformers.transformer_util import get_transformer, get_random_theta
 from ddtn.helper.utility import get_cat, show_images
 import numpy as np
 import tensorflow as tf

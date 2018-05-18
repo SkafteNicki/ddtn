@@ -8,6 +8,10 @@ Created on Mon May 14 14:35:01 2018
 #%%
 from keras.layers.core import Layer
 from ddtn.transformers.transformer_layers import ST_Affine_transformer
+from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
+from ddtn.transformers.transformer_layers import ST_Homografy_transformer
+from ddtn.transformers.transformer_layers import ST_CPAB_transformer
+from ddtn.transformers.transformer_layers import ST_TPS_transformer
 
 #%%
 class BaseTransformerLayer(Layer):
@@ -31,14 +35,47 @@ class BaseTransformerLayer(Layer):
     
     def call(self, X, mask=None):
         raise NotImplementedError("Must override call method")
+        
 #%%
 class SpatialAffineLayer(BaseTransformerLayer):
+    """ Spatial affine transformation keras layer """
     def call(self, X, mask=None):
         theta = self.locnet.call(X)
         output = ST_Affine_transformer(X, theta, self.output_size)
         return output
 
+#%%
+class SpatialAffineDiffioLayer(BaseTransformerLayer):
+    """ Spatial affine diffio transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_Affine_transformer(X, theta, self.output_size)
+        return output
 
+#%%
+class SpatialHomografyLayer(BaseTransformerLayer):
+    """ Spatial homografy transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_Homografy_transformer(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialCPABLayer(BaseTransformerLayer):
+    """ Spatial CPAB transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_CPAB_transformer(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialTPSLayer(BaseTransformerLayer):
+    """ Spatial TPS transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_TPS_transformer(X, theta, self.output_size)
+        return output
+    
 #%%
 if __name__ == '__main__':
     pass

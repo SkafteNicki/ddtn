@@ -17,11 +17,10 @@ from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer
 from ddtn.transformers.transformer_layers import ST_TPS_transformer
-from ddtn.transformers.transformer_layers import ST_Affine_transformer_batch
-from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer_batch
-from ddtn.transformers.transformer_layers import ST_CPAB_transformer_batch
-from ddtn.transformers.transformer_layers import ST_Homografy_transformer_batch
-from ddtn.transformers.transformer_layers import ST_TPS_transformer_batch
 
 # Fast access to keras layers
 from ddtn.transformers.keras_layers import SpatialAffineLayer
+from ddtn.transformers.keras_layers import SpatialAffineDiffioLayer
+from ddtn.transformers.keras_layers import SpatialHomografyLayer
+from ddtn.transformers.keras_layers import SpatialCPABLayer
+from ddtn.transformers.keras_layers import SpatialTPSLayer

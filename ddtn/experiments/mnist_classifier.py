@@ -5,17 +5,22 @@ Created on Tue May  8 16:24:41 2018
 @author: nsde
 """
 
-#%%
+#%% Packages
 import tensorflow as tf
 from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, InputLayer, MaxPool2D
 
+from ddtn.transformers.construct_localization_net import get_loc_net
+from ddtn.transformers.keras_layers import SpatialAffineLayer
+from ddtn.transformers.keras_layers import SpatialAffineDiffioLayer
+from ddtn.transformers.keras_layers import SpatialHomografyLayer
+from ddtn.transformers.keras_layers import SpatialCPABLayer
+from ddtn.transformers.keras_layers import SpatialTPSLayer
 
-from ddtn.transformers.localization_net import build_localization_network
-import argparse, datetime, os
+import argparse
 
-#%%
+#%% Argument parser for comman line input
 def argument_parser():
     parser = argparse.ArgumentParser(description='''This program will train a 
                                      neural network mnist dataset.''')
@@ -46,17 +51,11 @@ def argument_parser():
 if __name__ == '__main__':
     args = argument_parser()
     
-    # Load mnist dataset and one-hot encode labels
-    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
-    y_train = tf.keras.utils.to_categorical(y_train, 10)
-    y_test = tf.keras.utils.to_categorical(y_test, 10)
-    
-    # Initilize input layer
-    in_layer = InputLayer(input_shape=(28, 28, 1))
+    input_shape=()
     
     # Construct localization network
-    loc_net = build_localization_network(input_layer = in_layer, 
-                                         transformer_type = args['transformer_type'])
+    loc_net = get_loc_net(input_shape=,
+                          transformer_name=args['transformer_type'])
     
     # Construct keras model
     model = Sequential()

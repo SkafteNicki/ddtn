@@ -12,7 +12,6 @@ import numpy as np
 from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate, tf_TPS_meshgrid
 from ddtn.helper.tf_funcs import tf_TPS_system_solver, tf_expm3x3_analytic
 from ddtn.cuda.tf_CPAB_transformer import tf_CPAB_transformer
-from ddtn.helper.utility import load_basis
 
 #%%
 def ST_Affine_transformer(U, theta, out_size):
@@ -387,71 +386,6 @@ def ST_TPS_transformer_batch(U, thetas, out_size, tps_size = [4,4]):
         # Call transformer on repeated input
         V = ST_TPS_transformer(input_repeated, thetas, out_size, tps_size)
         return V 
-
-#%%
-def get_transformer(transformer_name='affine'):
-    lookup = {'affine': ST_Affine_transformer,
-              'affine_diffeo': ST_Affine_diffio_transformer,
-              'homografy': ST_Homografy_transformer,
-              'CPAB': ST_CPAB_transformer,
-              'TPS': ST_TPS_transformer
-             }
-    assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
-            + ', '.join([k for k in lookup.keys()])
-    return lookup[transformer_name]
-
-#%%
-def get_transformer_dim(transformer_name='affine'):
-    lookup = {'affine': 6,
-              'affine_diffeo': 6,
-              'homografy': 9,
-              'CPAB': load_basis()['d'],
-              'TPS': 32
-             }
-    assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
-            + ', '.join([k for k in lookup.keys()])
-    return lookup[transformer_name]
-
-#%%
-def get_random_theta(N, transformer_name='affine'):
-    dim = get_transformer_dim(transformer_name)
-    
-    if transformer_name == 'affine':
-        theta = np.zeros((N, dim))
-        theta[:,0] = np.abs(np.random.normal(loc=1, scale=0.2, size=N))
-        theta[:,4] = np.abs(np.random.normal(loc=1, scale=0.2, size=N))
-        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        
-    elif transformer_name == 'affine_diffeo':
-        theta = np.zeros((N, dim))
-        theta[:,0] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,4] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-    
-    elif transformer_name == 'homografy':
-        theta = np.zeros((N, dim))
-        theta[:,0] = np.random.normal(loc=1, scale=0.2, size=N)
-        theta[:,4] = np.random.normal(loc=1, scale=0.2, size=N)
-        theta[:,1] = theta[:,3] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,2] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,5] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,6] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,7] = np.abs(np.random.normal(loc=0, scale=0.2, size=N))
-        theta[:,8] = np.ones((N,))
-        
-    elif transformer_name == 'CPAB':
-        theta = 0.5*np.random.normal(size=(N, dim))
-    
-    elif transformer_name == 'TPS':
-        x,y=np.meshgrid(np.linspace(-1,1,4), np.linspace(-1,1,4))
-        points = np.concatenate((x.reshape((1,-1)),y.reshape((1,-1))), axis=0)
-        theta = np.tile(points.T.reshape(1,-1), (N, 1)) + 0.1*np.random.normal(size=(N, dim))
-    
-    return theta    
 
 #%%
 if __name__ == '__main__':
