@@ -11,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate, tf_TPS_meshgrid
 from ddtn.helper.tf_funcs import tf_TPS_system_solver, tf_expm3x3_analytic
-from ddtn.cuda.tf_CPAB_transformer import tf_CPAB_transformer
+from ddtn.cuda import tf_CPAB_transformer
 
 #%%
 def ST_Affine_transformer(U, theta, out_size):

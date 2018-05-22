@@ -12,6 +12,12 @@ from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer
 from ddtn.transformers.transformer_layers import ST_TPS_transformer
+from ddtn.transformers.transformer_layers import ST_Affine_transformer_batch
+from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer_batch
+from ddtn.transformers.transformer_layers import ST_Homografy_transformer_batch
+from ddtn.transformers.transformer_layers import ST_CPAB_transformer_batch
+from ddtn.transformers.transformer_layers import ST_TPS_transformer_batch
+
 
 #%%
 class BaseTransformerLayer(Layer):
@@ -49,7 +55,7 @@ class SpatialAffineDiffioLayer(BaseTransformerLayer):
     """ Spatial affine diffio transformation keras layer """
     def call(self, X, mask=None):
         theta = self.locnet.call(X)
-        output = ST_Affine_transformer(X, theta, self.output_size)
+        output = ST_Affine_diffio_transformer(X, theta, self.output_size)
         return output
 
 #%%
@@ -67,7 +73,7 @@ class SpatialCPABLayer(BaseTransformerLayer):
         theta = self.locnet.call(X)
         output = ST_CPAB_transformer(X, theta, self.output_size)
         return output
-
+    
 #%%
 class SpatialTPSLayer(BaseTransformerLayer):
     """ Spatial TPS transformation keras layer """
@@ -75,6 +81,47 @@ class SpatialTPSLayer(BaseTransformerLayer):
         theta = self.locnet.call(X)
         output = ST_TPS_transformer(X, theta, self.output_size)
         return output
+
+#%%
+class SpatialAffineBatchLayer(BaseTransformerLayer):
+    """ Spatial affine batch transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_Affine_transformer_batch(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialAffineDiffioBatchLayer(BaseTransformerLayer):
+    """ Spatial affine diffio batch transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_Affine_diffio_transformer_batch(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialHomografyBatchLayer(BaseTransformerLayer):
+    """ Spatial homografy batch transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_Homografy_transformer_batch(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialCPABBatchLayer(BaseTransformerLayer):
+    """ Spatial CPAB batch transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_CPAB_transformer_batch(X, theta, self.output_size)
+        return output
+
+#%%
+class SpatialTPSBatchLayer(BaseTransformerLayer):
+    """ Spatial TPS batch transformation keras layer """
+    def call(self, X, mask=None):
+        theta = self.locnet.call(X)
+        output = ST_TPS_transformer_batch(X, theta, self.output_size)
+        return output
+ 
     
 #%%
 if __name__ == '__main__':

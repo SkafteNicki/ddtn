@@ -6,21 +6,22 @@ Created on Mon May  7 09:34:54 2018
 """
 
 # Import directories
-from ddtn import helper
-from ddtn import transformers
-from ddtn import experiments
-from ddtn import cuda
+from . import helper
+from . import transformers
+from . import experiments
+from . import cuda
+from . import data
 
 # Fast access to transformers
-from ddtn.transformers.transformer_layers import ST_Affine_transformer
-from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
-from ddtn.transformers.transformer_layers import ST_CPAB_transformer
-from ddtn.transformers.transformer_layers import ST_Homografy_transformer
-from ddtn.transformers.transformer_layers import ST_TPS_transformer
+from .transformers.transformer_layers import ST_Affine_transformer
+from .transformers.transformer_layers import ST_Affine_diffio_transformer
+from .transformers.transformer_layers import ST_CPAB_transformer
+from .transformers.transformer_layers import ST_Homografy_transformer
+from .transformers.transformer_layers import ST_TPS_transformer
 
 # Fast access to keras layers
-from ddtn.transformers.keras_layers import SpatialAffineLayer
-from ddtn.transformers.keras_layers import SpatialAffineDiffioLayer
-from ddtn.transformers.keras_layers import SpatialHomografyLayer
-from ddtn.transformers.keras_layers import SpatialCPABLayer
-from ddtn.transformers.keras_layers import SpatialTPSLayer
+from .transformers.keras_layers import SpatialAffineLayer
+from .transformers.keras_layers import SpatialAffineDiffioLayer
+from .transformers.keras_layers import SpatialHomografyLayer
+from .transformers.keras_layers import SpatialCPABLayer
+from .transformers.keras_layers import SpatialTPSLayer

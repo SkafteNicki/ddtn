@@ -281,7 +281,7 @@ class CalcGradCPU : public OpKernel {
             // Loop over all transformers
             for(int batch_index = 0; batch_index < n_theta; batch_index++) {
                 // For all points
-                for(int point_index = 0; point_index < nP; point_index++ ) {
+                for(int point_index = 0; point_index < nP; point_index++) {
                     // For all parameters in the transformers
                     for(int dim_index = 0; dim_index < d; dim_index++) {
                         int index = 2 * nP * batch_index + point_index;
@@ -373,7 +373,6 @@ class CalcGradCPU : public OpKernel {
                     }
                 }    
             }
-        
         } // end compute method
     private:
         int mymin(int a, double b) {
