@@ -8,11 +8,18 @@ Created on Fri May 18 10:13:26 2018
 import numpy as np
 from ddtn.helper.utility import load_basis
 from ddtn.helper.math import create_grid
+
 from ddtn.transformers.transformer_layers import ST_Affine_transformer
 from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer
 from ddtn.transformers.transformer_layers import ST_TPS_transformer
+
+from ddtn.transformers.keras_layers import SpatialAffineLayer
+from ddtn.transformers.keras_layers import SpatialAffineDiffioLayer
+from ddtn.transformers.keras_layers import SpatialHomografyLayer
+from ddtn.transformers.keras_layers import SpatialCPABLayer
+from ddtn.transformers.keras_layers import SpatialTPSLayer
 
 #%%
 def get_transformer(transformer_name='affine'):
@@ -22,6 +29,19 @@ def get_transformer(transformer_name='affine'):
               'homografy': ST_Homografy_transformer,
               'CPAB': ST_CPAB_transformer,
               'TPS': ST_TPS_transformer
+             }
+    assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
+            + ', '.join([k for k in lookup.keys()])
+    return lookup[transformer_name]
+
+#%%
+def get_keras_layer(transformer_name='affine'):
+    """ Returns the keras layer for a given name """
+    lookup = {'affine': SpatialAffineLayer,
+              'affine_diffeo': SpatialAffineDiffioLayer,
+              'homografy': SpatialHomografyLayer,
+              'CPAB': SpatialCPABLayer,
+              'TPS': SpatialTPSLayer
              }
     assert (transformer_name in lookup), 'Transformer not found, choose between: ' \
             + ', '.join([k for k in lookup.keys()])
@@ -56,7 +76,7 @@ def get_transformer_init_weights(n_units, transformer_name='affine'):
             'CPAB': np.zeros((dim,), dtype=np.float32),
             'TPS': create_grid([-1,-1],[1,1],[4,4]).T.flatten()}
     
-    return [kernel, bias]
+    return (kernel[transformer_name], bias[transformer_name])
 
 #%%
 def get_random_theta(N, transformer_name='affine'):

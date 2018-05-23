@@ -37,7 +37,6 @@ class BaseTransformerLayer(Layer):
     def build(self, input_shape):
         self.locnet.build(input_shape)
         self.trainable_weights = self.locnet.trainable_weights
-        self.constraints = self.locnet.constraints
     
     def call(self, X, mask=None):
         raise NotImplementedError("Must override call method")

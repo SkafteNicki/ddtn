@@ -299,7 +299,8 @@ def tf_pure_CPAB_transformer(points, theta):
         trans_points = tf.while_loop(cond, body, [tf.constant(0), newpoints],
                                      parallel_iterations=10, back_prop=True)[1]
         # Reshape to batch format
-        trans_points = tf.reshape(trans_points[:,:2], (n_theta, 2, n_points))
+        trans_points = tf.reshape(tf.transpose(trans_points[:,:2], perm=[1,0,2]), 
+                                 (n_theta, 2, n_points))
         return trans_points
 
 #%%
@@ -325,18 +326,28 @@ if __name__ == '__main__':
     # Create computaitons
     newpoints_ana_tf = tf_cuda_CPAB_transformer(points_tf, theta_tf)
     newpoints_num_tf = tf_cuda_CPAB_transformer_numeric_grad(points_tf, theta_tf)
+    newpoints_pur_tf = tf_pure_CPAB_transformer(points_tf, theta_tf)
     grad_ana_tf = tf.gradients(newpoints_ana_tf, [theta_tf])[0]
     grad_num_tf = tf.gradients(newpoints_num_tf, [theta_tf])[0]
+    grad_pur_tf = tf.gradients(newpoints_pur_tf, [theta_tf])[0]
     
     sess = tf.Session()
-    p1, p2, g1, g2 = sess.run([newpoints_ana_tf, newpoints_num_tf, 
-                              grad_ana_tf, grad_num_tf])
+    p1, p2, p3, g1, g2, g3 = sess.run([newpoints_ana_tf, 
+                                       newpoints_num_tf, 
+                                       newpoints_pur_tf,
+                                       grad_ana_tf, 
+                                       grad_num_tf,
+                                       grad_pur_tf])
     
+    # Print gradient res
     print('Analytic gradient:')
     print(g1.round(3))
     print('Numeric gradient:')
     print(g2.round(3))
-    print('Difference:', (np.linalg.norm(g1 - g2) / np.linalg.norm(g1)).round(3))
+    print('Pure gradient:')
+    print(g3.round(3))
+    print('Difference ana-num:', (np.linalg.norm(g1 - g2) / np.linalg.norm(g1)).round(3))
+    print('Difference ana-pur:', (np.linalg.norm(g1 - g3) / np.linalg.norm(g1)).round(3))
     
     # Show deformation and velocity field
     fig = plt.figure()

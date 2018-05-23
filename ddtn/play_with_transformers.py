@@ -6,16 +6,34 @@ Created on Wed May 16 17:27:39 2018
 """
 #%%
 from ddtn.transformers.setup_CPAB_transformer import setup_CPAB_transformer
-from ddtn.transformers.transformer_util import get_transformer, get_random_theta
+from ddtn.helper.transformer_util import get_transformer, get_random_theta
 from ddtn.helper.utility import get_cat, show_images
 import numpy as np
 import tensorflow as tf
+import argparse
+#%%
+def _argument_parser():
+    parser = argparse.ArgumentParser(description='''This program will deform a
+                                     image of a cat using different transformations''')
+    parser.add_argument('-t', action="store", dest="transformer", type=str, 
+                        default='affine', help='''Transformer type to use. 
+                        Choose between: affine, cpab, affine_diffio, homografy
+                        or TPS''')
+    parser.add_argument('-n', action="store", dest="n_img", type=int, default = 15,
+                        help = '''Number of images to transform. Default 15''')
+    res = parser.parse_args()
+    args = vars(res)
+    return args
+
 
 #%%
 if __name__ == '__main__':
+    # Get command line arguments
+    args = _argument_parser()
+    
     # Set this
-    transformer_name = 'TPS' # transformer to use
-    N = 15 # number of transformations
+    transformer_name = args['transformer'] # transformer to use
+    N = args['n_img'] # number of transformations
     
     # Special for CPAB
     if transformer_name=='CPAB': s = setup_CPAB_transformer()

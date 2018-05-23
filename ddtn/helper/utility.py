@@ -13,6 +13,15 @@ except:
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from tensorflow.python.client import device_lib 
+
+#%%
+def check_for_gpu():
+    devices = device_lib.list_local_devices()
+    gpu = False
+    for d in devices:
+        if d.device_type == "GPU": gpu=True
+    return gpu
 
 #%%
 def make_hashable(arr):
