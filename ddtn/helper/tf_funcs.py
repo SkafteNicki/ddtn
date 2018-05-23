@@ -9,6 +9,7 @@ Created on Mon Nov 20 09:46:23 2017
 #%%
 import tensorflow as tf
 
+#%%
 def tf_findcellidx(points, ncx, ncy, inc_x, inc_y):
     """ Computes the cell index for some points and a given tessalation 
     

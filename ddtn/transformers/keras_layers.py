@@ -6,7 +6,7 @@ Created on Mon May 14 14:35:01 2018
 """
 
 #%%
-from keras.layers.core import Layer
+from tensorflow.python.keras._impl.keras.layers.core import Layer
 from ddtn.transformers.transformer_layers import ST_Affine_transformer
 from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer

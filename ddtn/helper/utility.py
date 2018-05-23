@@ -13,6 +13,7 @@ except:
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 from tensorflow.python.client import device_lib 
 
 #%%
@@ -22,6 +23,10 @@ def check_for_gpu():
     for d in devices:
         if d.device_type == "GPU": gpu=True
     return gpu
+
+#%%
+def check_cuda_support():
+    return tf.test.is_built_with_cuda()
 
 #%%
 def make_hashable(arr):

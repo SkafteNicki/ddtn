@@ -26,12 +26,12 @@ struct Cuda3DLaunchConfig {
     dim3 block_count;
 };
 
-inline Cuda3DLaunchConfig GetCuda2DLaunchConfigOWN(int xdim, int ydim){
+inline Cuda2DLaunchConfig GetCuda2DLaunchConfigOWN(int xdim, int ydim){
     Cuda2DLaunchConfig config;
     
-    config.virtual_thread_cound = dim3(xdim. ydim)
-    config.thread_per_block = dim3(256, 1)
-    config.block_count((int)ceil(xdim/256.0), ydim)
+    config.virtual_thread_count = dim3(xdim, ydim);
+    config.thread_per_block = dim3(256, 1);
+    config.block_count = dim3((int)ceil(xdim/256.0), ydim);
     
     return config;
 }

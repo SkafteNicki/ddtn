@@ -72,7 +72,7 @@ def get_transformer_init_weights(n_units, transformer_name='affine'):
     
     bias = {'affine': np.array([1,0,0,0,1,0], dtype=np.float32),
             'affine_diffeo': np.zeros((dim,), dtype=np.float32),
-            'homografy': np.array([1,0,0,0,1,0,0,0,0], dtype=np.float32),
+            'homografy': np.array([1,0,0,0,1,0,0,0,1], dtype=np.float32),
             'CPAB': np.zeros((dim,), dtype=np.float32),
             'TPS': create_grid([-1,-1],[1,1],[4,4]).T.flatten()}
     
