@@ -10,6 +10,8 @@ from ddtn.helper.utility import check_for_gpu, check_cuda_support
 # This will load the fast cuda version of the CPAB transformer and gradient for
 # linux and MAC OS X and load the slower pure tensorflow implemented CPAB 
 # transformer for windows
+
+print(50*'-')
 print('Operating system:', _platform)
 
 gpu = check_for_gpu() and check_cuda_support()
@@ -22,23 +24,10 @@ else:
    # Windows 32 or 64-bit or no GPU
    from ddtn.cuda.CPAB_transformer import tf_pure_CPAB_transformer as tf_CPAB_transformer
    print('Using the slow pure tensorflow implementation for CPAB')
+print(50*'-')
 
 # Import directories
 from . import helper
 from . import transformers
 from . import cuda
 from . import data
-
-# Fast access to transformers
-from .transformers.transformer_layers import ST_Affine_transformer
-from .transformers.transformer_layers import ST_Affine_diffio_transformer
-from .transformers.transformer_layers import ST_CPAB_transformer
-from .transformers.transformer_layers import ST_Homografy_transformer
-from .transformers.transformer_layers import ST_TPS_transformer
-
-# Fast access to keras layers
-from .transformers.keras_layers import SpatialAffineLayer
-from .transformers.keras_layers import SpatialAffineDiffioLayer
-from .transformers.keras_layers import SpatialHomografyLayer
-from .transformers.keras_layers import SpatialCPABLayer
-from .transformers.keras_layers import SpatialTPSLayer

@@ -19,7 +19,7 @@ def _argument_parser():
                         default='affine', help='''Transformer type to use. 
                         Choose between: affine, cpab, affine_diffio, homografy
                         or TPS''')
-    parser.add_argument('-n', action="store", dest="n_img", type=int, default = 15,
+    parser.add_argument('-n', action="store", dest="n_img", type=int, default = 20,
                         help = '''Number of images to transform. Default 15''')
     res = parser.parse_args()
     args = vars(res)
@@ -57,4 +57,6 @@ if __name__ == '__main__':
     sess = tf.Session()
     out_im = sess.run(trans_im)
     
-    show_images(out_im, title=transformer_name + ' transformations', cols=3)
+    # Show the transformed images
+    show_images(out_im, title=transformer_name + ' transformations', 
+                cols=np.round(np.sqrt(N)))
