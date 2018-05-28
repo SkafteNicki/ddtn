@@ -6,24 +6,18 @@ Created on Tue May  8 16:24:41 2018
 """
 
 #%% Packages
-import tensorflow as tf
-from tensorflow import keras
-from keras.models import Sequential
-from keras.layers import Dense, Conv2D, InputLayer, MaxPool2D, Flatten
-import keras.backend as K
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, Conv2D, InputLayer, MaxPool2D, Flatten
+from tensorflow.python.keras import backend as K
 
 from ddtn.transformers.construct_localization_net import get_loc_net
-from ddtn.transformers.keras_layers import SpatialAffineLayer
-from ddtn.transformers.keras_layers import SpatialAffineDiffioLayer
-from ddtn.transformers.keras_layers import SpatialHomografyLayer
-from ddtn.transformers.keras_layers import SpatialCPABLayer
-from ddtn.transformers.keras_layers import SpatialTPSLayer
-from ddtn.data.get_mnist import get_mnist_distorted
+from ddtn.helper.transformer_util import get_keras_layer
+from ddtn.data.mnist_getter import get_mnist_distorted
 
 import argparse
 
 #%% Argument parser for comman line input
-def argument_parser():
+def _argument_parser():
     parser = argparse.ArgumentParser(description='''This program will train a 
                                      neural network mnist dataset.''')
     parser.add_argument('-lr', action="store", dest="learning_rate", type=float, default = 0.0001,
@@ -32,9 +26,10 @@ def argument_parser():
                         help = '''Number of epochs. Default: 10''')
     parser.add_argument('-bs', action="store", dest="batch_size", type=int, default = 100,
                         help = '''Batch size: Default: 100''')
-    parser.add_argument('-tt', action="store", dest="transformer_type", type=str, default='no',
-                        help = '''Transformer type to use. Choose between: no, 
-                                  affine, cpab or affine_cpab. Default: no''')
+    parser.add_argument('-tt', action="store", dest="transformer_type", type=str, 
+                        default='affine', help = '''Transformer type to use. 
+                        Choose between: no, affine, cpab, affine_diffio, homografy
+                        or TPS''')
     res = parser.parse_args()
     args = vars(res)
     
@@ -51,38 +46,26 @@ def argument_parser():
 
 #%%
 if __name__ == '__main__':
-    args = argument_parser()
+    args = _argument_parser()
     
     X_train, y_train, X_test, y_test = get_mnist_distorted()
     
     input_shape=(60,60,1)
-    
+        
     # Keras model
     model = Sequential()
     model.add(InputLayer(input_shape=input_shape))
     
-    # Construct localization network
-    loc_net = get_loc_net(input_shape=input_shape,
-                          transformer_name=args['transformer_type'])
+    if args['transformer_type'] != 'no': # only construct if we want to use transformers
+        # Construct localization network
+        loc_net = get_loc_net(input_shape=input_shape,
+                              transformer_name=args['transformer_type'])
     
-    
-    # Add localization network
-    if args['transformer_type']=='affine': 
-        model.add(SpatialAffineLayer(localization_net=loc_net, 
-                                     output_size=input_shape))
-    if args['transformer_type']=='affine_diffeo': 
-        model.add(SpatialAffineDiffioLayer(localization_net=loc_net, 
-                                           output_size=input_shape))
-    if args['transformer_type']=='homografy': 
-        model.add(SpatialHomografyLayer(localization_net=loc_net, 
-                                        output_size=input_shape))
-    if args['transformer_type']=='CPAB': 
-        model.add(SpatialCPABLayer(localization_net=loc_net, 
-                                   output_size=input_shape))
-    if args['transformer_type']=='TPS': 
-        model.add(SpatialTPSLayer(localization_net=loc_net, 
-                                  output_size=input_shape))
-    
+        # Add localization network and transformer layer
+        transformer_layer = get_keras_layer(args['transformer_type'])
+        model.add(transformer_layer(localization_net=loc_net, 
+                                    output_size=input_shape))
+   
     # Construct feature extraction network
     model.add(Conv2D(32, (3,3), activation='relu'))
     model.add(Conv2D(32, (3,3), activation='relu'))
@@ -95,21 +78,26 @@ if __name__ == '__main__':
     model.add(Dense(10, activation='softmax'))
 
     # Compile model
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=keras.optimizers.Adadelta(),
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
                   metrics=['accuracy'])
     
     # Get summary of model
+    print('Global model')
     model.summary()
+    if args['transformer_type'] != 'no':
+        print('Localization net')
+        loc_net.summary()
 
     # Fit model
     model.fit(X_train, y_train,
               batch_size=args['batch_size'],
               epochs=args['num_epochs'],
               verbose=1,
-              validation_data=(X_test, y_test))
+              validation_data=(X_test, y_test))    
     
-    # Construct transformer function
-    trans_func = K.function(model.input, model.layers[0].output)
-    
-    # Feed some data
+#    # Construct transformer function
+#    trans_func = K.function([model.input], [model.layers[1].output])
+#    
+#    # Feed some data
+#    new_imgs = trans_func([X_train[:10]])[0]
