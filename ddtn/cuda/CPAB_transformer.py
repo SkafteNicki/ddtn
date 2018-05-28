@@ -300,8 +300,8 @@ def tf_pure_CPAB_transformer(points, theta):
         trans_points = tf.while_loop(cond, body, [tf.constant(0), newpoints],
                                      parallel_iterations=10, back_prop=True)[1]
         # Reshape to batch format
-        trans_points = tf.reshape(tf.transpose(trans_points[:,:2], perm=[1,0,2]), 
-                                 (n_theta, 2, n_points))
+        trans_points = tf.transpose(tf.reshape(tf.transpose(trans_points[:,:2,0]),
+                                    (2, n_theta, n_points)), perm=[1,0,2])
         return trans_points
 
 #%%
@@ -317,7 +317,7 @@ if __name__ == '__main__':
                                override=True)
     
     # Sample parametrization and grid
-    theta = 0.5*s.sample_theta_without_prior(1)
+    theta = 0.3*s.sample_theta_without_prior(3)
     points = s.sample_grid(20)
     
     # Convert to tf tensors
@@ -342,11 +342,11 @@ if __name__ == '__main__':
     
     # Print gradient res
     print('Analytic gradient:')
-    print(g1.round(3))
+    print(g1[0].round(3))
     print('Numeric gradient:')
-    print(g2.round(3))
+    print(g2[0].round(3))
     print('Pure gradient:')
-    print(g3.round(3))
+    print(g3[0].round(3))
     print('Difference ana-num:', (np.linalg.norm(g1 - g2) / np.linalg.norm(g1)).round(3))
     print('Difference ana-pur:', (np.linalg.norm(g1 - g3) / np.linalg.norm(g1)).round(3))
     
@@ -357,6 +357,6 @@ if __name__ == '__main__':
     plt.plot(p3[0,0], p3[0,1], 'g.', label='deformed grid, pure')
     plt.legend(bbox_to_anchor=(1.1, 1.05), fontsize=15)
     plt.axis('equal')
-    s.visualize_vectorfield_arrow(theta.flatten())
+    s.visualize_vectorfield_arrow(theta[0].flatten())
     plt.show()
     
