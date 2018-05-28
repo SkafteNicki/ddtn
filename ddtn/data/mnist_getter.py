@@ -6,7 +6,6 @@ Created on Fri May 18 10:57:24 2018
 """
 
 #%%
-import tensorflow as tf
 import numpy as np
 import urllib
 import os

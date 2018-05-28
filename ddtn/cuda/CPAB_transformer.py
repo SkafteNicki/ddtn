@@ -204,13 +204,14 @@ def tf_cuda_CPAB_transformer_numeric_grad(points, theta):
 
 #%%
 def tf_pure_CPAB_transformer(points, theta):
-    """ CPAB transformer in pure tensorflow. Transform the input points by
-        repeatly appling the matrix-exponentials parametrized by theta. This
-        function should automatic be able to calculate the gradient of the
-        output w.r.t. theta.
+    """ CPAB transformer in pure tensorflow. 
+        Transform the input points by repeatly appling the matrix-exponentials 
+        parametrized by theta. This function should automatic be able to calculate 
+        the gradient of the output w.r.t. theta.
     
     Arguments:
         points: `Matrix` [2, n_points]. 2D input points to transform
+        
         theta: `Matrix` [n_theta, dim]. Parametrization to use. 
             
     Output:
@@ -309,6 +310,7 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
     
+    
     # Create basis
     s = setup_CPAB_transformer(2, 2, 
                                valid_outside=True, 
@@ -353,6 +355,7 @@ if __name__ == '__main__':
     fig = plt.figure()
     plt.plot(points[0], points[1], 'b.', label='original grid')
     plt.plot(p1[0,0], p1[0,1], 'r.', label='deformed grid')
+    plt.plot(p3[0,0], p3[0,1], 'g.', label='deformed grid')
     plt.legend(fontsize=15)
     s.visualize_vectorfield_arrow(theta.flatten())
     plt.show()

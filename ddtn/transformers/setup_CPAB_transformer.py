@@ -9,9 +9,9 @@ Created on Mon Nov 20 09:59:09 2017
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.linalg import expm as scipy_expm
 from ddtn.helper.utility import get_dir, load_obj, save_obj, make_hashable
 from ddtn.helper.math import null, create_grid
-from scipy.linalg import expm as scipy_expm
 
 #%%
 class setup_CPAB_transformer:
@@ -146,7 +146,7 @@ class setup_CPAB_transformer:
         self.D, self.d = self.B.shape
         
         # Print information about basis
-        print(50*'-')
+        print(70*'-')
         if loaded:
             print('Loaded file ' + name + '.pkl, ' \
                   'containing tessalation with settings:')
@@ -158,7 +158,7 @@ class setup_CPAB_transformer:
         print('    zero boundary     = {0}'.format(self.zero_boundary))
         print('    volume preserving = {0}'.format(self.zero_trace))
         print('With these settings, theta.shape = {0}x1'.format(self.B.shape[1]))
-        print(50*'-')
+        print(70*'-')
             
         
     def tessalation(self):

@@ -10,8 +10,8 @@ from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import Dense, Flatten
 from tensorflow.python.keras.layers import Conv2D, MaxPool2D
 
-from ddtn.helper.transformer_util import get_transformer_dim
-from ddtn.helper.transformer_util import get_transformer_init_weights
+from ddtn.transformers.transformer_util import get_transformer_init_weights
+from ddtn.transformers.transformer_util import get_transformer_dim
 
 #%%
 def get_loc_net(input_shape, transformer_name = 'affine'):
@@ -35,4 +35,4 @@ def get_loc_net(input_shape, transformer_name = 'affine'):
     
 #%%
 if __name__ == "__main__":
-    locnet = get_loc_net((28, 28, 1), transformer_name='affine')
+    pass

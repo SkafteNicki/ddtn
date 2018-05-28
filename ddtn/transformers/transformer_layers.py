@@ -9,9 +9,12 @@ Created on Mon Nov 27 09:04:35 2017
 #%%
 import tensorflow as tf
 import numpy as np
-from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate, tf_TPS_meshgrid
-from ddtn.helper.tf_funcs import tf_TPS_system_solver, tf_expm3x3_analytic
-from ddtn import tf_CPAB_transformer
+from ddtn.helper.tf_funcs import tf_meshgrid, tf_interpolate
+from ddtn.transformers.transformers import tf_Affine_transformer
+from ddtn.transformers.transformers import tf_Affinediffeo_transformer
+from ddtn.transformers.transformers import tf_Homografy_transformer
+from ddtn.transformers.transformers import tf_CPAB_transformer
+from ddtn.transformers.transformers import tf_TPS_transformer
 
 #%%
 def ST_Affine_transformer(U, theta, out_size):
@@ -30,8 +33,6 @@ def ST_Affine_transformer(U, theta, out_size):
             with transformed images.
     """
     with tf.name_scope('ST_Affine_transformer'):
-        num_batch = tf.shape(theta)[0]
-   
         # Reshape theta
         theta = tf.reshape(theta, (-1, 2, 3))
     
@@ -39,10 +40,9 @@ def ST_Affine_transformer(U, theta, out_size):
         out_height = out_size[0]
         out_width = out_size[1]
         grid = tf_meshgrid(out_height, out_width)
-        grid = tf.tile(tf.expand_dims(grid, 0), [num_batch, 1, 1])
         
-        # Transform A x (x_t, y_t, 1)^T -> (x_s, y_s)
-        T_g = tf.matmul(theta, grid)
+        # Call transformer
+        T_g = tf_Affine_transformer(grid, theta)
         
         # Slice and reshape
         x_s = tf.slice(T_g, [0, 0, 0], [-1, 1, -1])
@@ -55,7 +55,7 @@ def ST_Affine_transformer(U, theta, out_size):
         return V
 
 #%%
-def ST_Affine_diffio_transformer(U, theta, out_size):
+def ST_Affinediffeo_transformer(U, theta, out_size):
     """ Spatial transformer using diffeomorphic affine transformations
     
     Arguments:
@@ -70,9 +70,7 @@ def ST_Affine_diffio_transformer(U, theta, out_size):
         V: 4D-`Tensor` [n_batch, out_size[0], out_size[1], n_channels]. Tensor
             with transformed images.
     """
-    with tf.name_scope('ST_Affine_diffeo_transformer'):
-        num_batch = tf.shape(theta)[0]
-   
+    with tf.name_scope('ST_Affinediffeo_transformer'):
         # Reshape theta
         theta = tf.reshape(theta, (-1, 2, 3))
     
@@ -80,14 +78,9 @@ def ST_Affine_diffio_transformer(U, theta, out_size):
         out_height = out_size[0]
         out_width = out_size[1]
         grid = tf_meshgrid(out_height, out_width)
-        grid = tf.tile(tf.expand_dims(grid, 0), [num_batch, 1, 1])
         
-        # Take matrix exponential -> creates invertable affine transformation
-        theta = tf_expm3x3_analytic(theta)
-        theta = theta[:,:2,:]
-        
-        # Transform A x (x_t, y_t, 1)^T -> (x_s, y_s)
-        T_g = tf.matmul(theta, grid)
+        # Call transformer
+        T_g = tf_Affinediffeo_transformer(grid, theta)
         
         # Slice and reshape
         x_s = tf.slice(T_g, [0, 0, 0], [-1, 1, -1])
@@ -153,8 +146,6 @@ def ST_Homografy_transformer(U, theta, out_size):
             with transformed images.
     """
     with tf.name_scope('ST_Homografy_transformer'):
-        num_batch = tf.shape(theta)[0]
-   
         # Reshape theta
         theta = tf.reshape(theta, (-1, 3, 3))
     
@@ -162,13 +153,9 @@ def ST_Homografy_transformer(U, theta, out_size):
         out_height = out_size[0]
         out_width = out_size[1]
         grid = tf_meshgrid(out_height, out_width)
-        grid = tf.tile(tf.expand_dims(grid, 0), [num_batch, 1, 1])
         
-        # Transform A x (x_t, y_t, 1)^T -> (x_s, y_s, z_s)
-        T_g = tf.matmul(theta, grid)
-        
-        # Make non-homo cordinates (x_s, y_s, z_s) -> (x_s / z_s, y_s / z_s, 1)
-        T_g = T_g[:,:2,:] / tf.expand_dims(T_g[:,2,:], 1)
+        # Call transformer
+        T_g = tf_Homografy_transformer(grid, theta)
         
         # Slice and reshape
         x_s = tf.slice(T_g, [0, 0, 0], [-1, 1, -1])
@@ -201,21 +188,15 @@ def ST_TPS_transformer(U, theta, out_size, tps_size = [4,4]):
             with transformed images.
     """
     with tf.name_scope('ST_TPS_transformer'):
-        num_batch = tf.shape(theta)[0]
-        
-        # Solve TPS system
-        target = tf.reshape(theta, (-1, tps_size[0]*tps_size[1], 2))
-        source = tf.transpose(tf_meshgrid(tps_size[0], tps_size[1])[:2,:]) # [np, 2]
-        source = tf.tile(tf.expand_dims(source, 0), [num_batch, 1, 1]) # [bs, np, 2]
-        T = tf_TPS_system_solver(source, target) # [bs, 2, np]
+        theta = tf.reshape(theta, (-1, tps_size[0]*tps_size[1], 2))
         
         # Create grid of points
         out_height = out_size[0]
         out_width = out_size[1]
-        grid = tf_TPS_meshgrid(out_height, out_width, source)
+        grid = tf_meshgrid(out_height, out_width)
         
-        # Transform points with TPS kernel
-        T_g = tf.matmul(T, grid)
+        # Call transformer
+        T_g = tf_TPS_transformer(grid, theta)
         
         # Slice and reshape
         x_s = tf.slice(T_g, [0, 0, 0], [-1, 1, -1])
@@ -259,7 +240,7 @@ def ST_Affine_transformer_batch(U, thetas, out_size):
         return V
     
 #%%
-def ST_Affine_diffio_transformer_batch(U, thetas, out_size):
+def ST_Affinediffeo_transformer_batch(U, thetas, out_size):
     """ Batch version of the diffeomorphic affine transformer. Applies a batch 
         of affine transformations to each image in U.
         
@@ -286,7 +267,7 @@ def ST_Affine_diffio_transformer_batch(U, thetas, out_size):
         input_repeated = tf.gather(U, tf.reshape(indices, [-1]))
         
         # Call transformer on repeated input
-        V = ST_Affine_diffio_transformer(input_repeated, thetas, out_size)
+        V = ST_Affinediffeo_transformer(input_repeated, thetas, out_size)
         return V
 
 #%%

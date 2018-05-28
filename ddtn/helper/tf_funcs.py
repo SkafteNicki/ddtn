@@ -115,13 +115,15 @@ def tf_TPS_system_solver(source, target):
         return T
 
 #%%
-def tf_TPS_meshgrid(height, width, source):
+def tf_TPS_meshgrid_old(height, width, source):
     """ Construct the meshgrid for the TPS transformer. It calculates a grid like
         tf_meshgrid, but additionally also calculates the distance of each grid
         points to the source grid.
     Arguments:
         height: 
+            
         width:
+            
         source: 3D-`Tensor` [N_batch, n_points, 2]. source points.
     Output:        
         grid: 3D-`Tensor` [N_batch, n_points+3, height*width] of grid points and
@@ -150,6 +152,29 @@ def tf_TPS_meshgrid(height, width, source):
     
         grid = tf.concat([ones, x_t_flat_g, y_t_flat_g, r], 1) # [bn, 3+pn, h*w]
         return grid
+
+#%%    
+def tf_TPS_meshgrid(points, source):
+    """
+    Arguments:
+        points: `Matrix` [3, n_points]
+            
+        source:
+    
+    """
+    with tf.name_scope('TPS_meshgrid'):
+        num_batch = tf.shape(source)[0]
+        x_t_flat = tf.reshape(points[0], (1,1,-1))
+        y_t_flat = tf.reshape(points[1], (1,1,-1))
+        px = tf.expand_dims(source[:,:,0], 2) # [bn, pn, 1]
+        py = tf.expand_dims(source[:,:,1], 2) # [bn, pn, 1]
+        d2 = tf.square(x_t_flat - px) + tf.square(y_t_flat - py)
+        r = d2 * tf.log(d2 + 1e-6) # [bn, pn, h*w]
+        x_t_flat_g = tf.tile(x_t_flat, tf.stack([num_batch, 1, 1])) # [bn, 1, h*w]
+        y_t_flat_g = tf.tile(y_t_flat, tf.stack([num_batch, 1, 1])) # [bn, 1, h*w]
+        ones = tf.ones_like(x_t_flat_g) # [bn, 1, h*w]
+        grid = tf.concat([ones, x_t_flat_g, y_t_flat_g, r], 1) # [bn, 3+pn, h*w]
+        return grid        
 
 #%%
 def tf_mymin(x, y):

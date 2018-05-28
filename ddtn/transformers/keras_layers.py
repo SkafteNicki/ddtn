@@ -8,12 +8,12 @@ Created on Mon May 14 14:35:01 2018
 #%%
 from tensorflow.python.keras._impl.keras.layers.core import Layer
 from ddtn.transformers.transformer_layers import ST_Affine_transformer
-from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer
+from ddtn.transformers.transformer_layers import ST_Affinediffeo_transformer
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer
 from ddtn.transformers.transformer_layers import ST_TPS_transformer
 from ddtn.transformers.transformer_layers import ST_Affine_transformer_batch
-from ddtn.transformers.transformer_layers import ST_Affine_diffio_transformer_batch
+from ddtn.transformers.transformer_layers import ST_Affinediffeo_transformer_batch
 from ddtn.transformers.transformer_layers import ST_Homografy_transformer_batch
 from ddtn.transformers.transformer_layers import ST_CPAB_transformer_batch
 from ddtn.transformers.transformer_layers import ST_TPS_transformer_batch
@@ -50,11 +50,11 @@ class SpatialAffineLayer(BaseTransformerLayer):
         return output
 
 #%%
-class SpatialAffineDiffioLayer(BaseTransformerLayer):
+class SpatialAffineDiffeoLayer(BaseTransformerLayer):
     """ Spatial affine diffio transformation keras layer """
     def call(self, X, mask=None):
         theta = self.locnet.call(X)
-        output = ST_Affine_diffio_transformer(X, theta, self.output_size)
+        output = ST_Affinediffeo_transformer(X, theta, self.output_size)
         return output
 
 #%%
@@ -94,7 +94,7 @@ class SpatialAffineDiffioBatchLayer(BaseTransformerLayer):
     """ Spatial affine diffio batch transformation keras layer """
     def call(self, X, mask=None):
         theta = self.locnet.call(X)
-        output = ST_Affine_diffio_transformer_batch(X, theta, self.output_size)
+        output = ST_Affinediffeo_transformer_batch(X, theta, self.output_size)
         return output
 
 #%%
