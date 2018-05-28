@@ -35,4 +35,4 @@ def get_loc_net(input_shape, transformer_name = 'affine'):
     
 #%%
 if __name__ == "__main__":
-    pass
+    loc_net = get_loc_net((250, 250, 1), transformer_name='affine')

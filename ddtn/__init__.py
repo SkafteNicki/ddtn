@@ -14,16 +14,15 @@ from . import transformers
 
 #%%
 from sys import platform as _platform
-from ddtn.helper.utility import check_for_gpu, check_cuda_support
+from ddtn.helper.utility import gpu_support
 # Tells the user what kind of implementation will be used for the
 # CPAB transformations
 
 print(70*'-')
 print('Operating system:', _platform)
 
-gpu = check_for_gpu() and check_cuda_support()
 if (_platform == "linux" or _platform == "linux2" \
-    or _platform == "darwin") and gpu: 
+    or _platform == "darwin") and gpu_support(): 
    print('Using the fast cuda implementation for CPAB')
 else:
    # Windows 32 or 64-bit or no GPU

@@ -6,7 +6,7 @@ Created on Wed May 16 17:27:39 2018
 """
 #%%
 from ddtn.transformers.setup_CPAB_transformer import setup_CPAB_transformer
-from ddtn.transformers.transformer_util import get_transformer, get_random_theta
+from ddtn.transformers.transformer_util import get_transformer_layer, get_random_theta
 from ddtn.helper.utility import get_cat, show_images
 import numpy as np
 import tensorflow as tf
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     if transformer_name=='CPAB': s = setup_CPAB_transformer()
     
     # Get transformer and random transformation
-    transformer = get_transformer(transformer_name)
+    transformer = get_transformer_layer(transformer_name)
     theta = get_random_theta(N, transformer_name)
     
     # Load im and create a batch of imgs
@@ -62,5 +62,4 @@ if __name__ == '__main__':
     out_im = sess.run(trans_im, options=run_options)
     
     # Show the transformed images
-    show_images(out_im, title=transformer_name + ' transformations', 
-                cols=np.round(np.sqrt(N)))
+    show_images(out_im, title=transformer_name + ' transformations')

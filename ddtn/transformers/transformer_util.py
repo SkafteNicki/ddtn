@@ -130,13 +130,23 @@ def get_random_theta(N, transformer_name='affine'):
         theta[:,8] = np.ones((N,))
         
     elif transformer_name == 'CPAB':
-        theta = 0.1*np.random.normal(size=(N, dim))
+        theta = 0.5*np.random.normal(size=(N, dim))
     
     elif transformer_name == 'TPS':
         x,y=np.meshgrid(np.linspace(-1,1,4), np.linspace(-1,1,4))
         points = np.concatenate((x.reshape((1,-1)),y.reshape((1,-1))), axis=0)
         theta = np.tile(points.T.reshape(1,-1), (N, 1)) + 0.1*np.random.normal(size=(N, dim))
     
+    return theta
+
+#%%
+def format_theta(theta, transformer_name):
+    if transformer_name == 'affine' or transformer_name == 'affinediffeo':
+        theta = np.reshape(theta, (-1, 2, 3))
+    elif transformer_name == 'homografy':
+        theta = np.reshape(theta, (-1, 3, 3))
+    elif transformer_name == 'TPS':
+        theta = np.reshape(theta, (-1, 16, 2))
     return theta
 
 #%%

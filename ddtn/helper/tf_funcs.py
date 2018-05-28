@@ -590,8 +590,8 @@ if __name__ == '__main__':
         time3[idx] = time() - start
         
     plt.figure()
-    plt.semilogx(n, time1, label='Numeric')
-    plt.semilogx(n, time2, label='Analytic')
-    plt.semilogx(n, time3, label='Scipy')
-    plt.legend()
+    plt.semilogx(n, time1, label='Numeric expm')
+    plt.semilogx(n, time2, label='Analytic expm')
+    plt.semilogx(n, time3, label='Scipy expm')
+    plt.legend(fontsize=15)
     

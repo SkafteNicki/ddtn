@@ -17,6 +17,12 @@ import tensorflow as tf
 from tensorflow.python.client import device_lib 
 
 #%%
+def gpu_support():
+    test1 = check_for_gpu()
+    test2 = check_cuda_support()
+    return (test1 and test2)
+
+#%%
 def check_for_gpu():
     devices = device_lib.list_local_devices()
     gpu = False
@@ -75,14 +81,14 @@ def get_cat():
     return plt.imread(direc + '/../cat.jpg')
 
 #%%
-def show_images(images, cols=1, title=None, scaling=False):
+def show_images(images, cols='auto', title=None, scaling=False):
     """ Display a list of images in a single figure with matplotlib.
     
     Arguments
         images: List/tensor of np.arrays compatible with plt.imshow.
     
-        cols (Default = 1): Number of columns in figure (number of rows is 
-                            set to np.ceil(n_images/float(cols))).
+        cols (Default = 'auto'): Number of columns in figure (number of rows is 
+                                 set to np.ceil(n_images/float(cols))).
         
         title: One main title for the hole figure
             
@@ -90,6 +96,7 @@ def show_images(images, cols=1, title=None, scaling=False):
                 number of images. Good if one want to show many.
     """
     n_images = len(images)
+    cols = np.round(np.sqrt(n_images)) if cols=='auto' else cols
     rows = np.ceil(n_images/float(cols))
     fig = plt.figure()
     if type(title)==str: fig.suptitle(title, fontsize=20)
@@ -109,5 +116,5 @@ def show_images(images, cols=1, title=None, scaling=False):
 if __name__ == '__main__':
     im = get_cat()
     im = np.tile(im, (10, 1, 1, 1))
-    show_images(im, cols=3, scaling=False)
+    show_images(im)
     

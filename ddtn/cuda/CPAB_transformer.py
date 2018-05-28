@@ -310,7 +310,6 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
     
-    
     # Create basis
     s = setup_CPAB_transformer(2, 2, 
                                valid_outside=True, 
@@ -354,9 +353,10 @@ if __name__ == '__main__':
     # Show deformation and velocity field
     fig = plt.figure()
     plt.plot(points[0], points[1], 'b.', label='original grid')
-    plt.plot(p1[0,0], p1[0,1], 'r.', label='deformed grid')
-    plt.plot(p3[0,0], p3[0,1], 'g.', label='deformed grid')
-    plt.legend(fontsize=15)
+    plt.plot(p1[0,0], p1[0,1], 'r+', label='deformed grid, cuda')
+    plt.plot(p3[0,0], p3[0,1], 'g.', label='deformed grid, pure')
+    plt.legend(bbox_to_anchor=(1.1, 1.05), fontsize=15)
+    plt.axis('equal')
     s.visualize_vectorfield_arrow(theta.flatten())
     plt.show()
     

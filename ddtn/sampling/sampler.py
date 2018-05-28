@@ -8,6 +8,7 @@ Created on Wed May 23 12:38:44 2018
 
 #%%
 import numpy as np
+import matplotlib.pyplot as plt
 
 from ddtn.transformers.transformer_util import get_transformer
 from ddtn.transformers.transformer_util import get_transformer_dim
@@ -16,7 +17,7 @@ import tensorflow as tf
 
 #%%
 class image_registration(object):
-    def __init__(self, transformer='affine'):
+    def __init__(self, transformer='TPS'):
         self.trans_func = get_transformer(transformer)
         self.dim = get_transformer_dim(transformer)
         self.init = get_transformer_init_weights(1, transformer)[1]
@@ -29,7 +30,7 @@ class image_registration(object):
 #        return self.sess.run(trans_im)[0]
         
     def transform_lm(self, lm, theta):
-        theta = np.reshape(theta, (1, 2, 3))
+        theta = np.reshape(theta, (1, 16, 2))
         trans_lm = self.trans_func(lm, theta)
         return self.sess.run(trans_lm)[0]
         
@@ -37,7 +38,7 @@ class image_registration(object):
         return np.linalg.norm(x - y)
     
     def proposal(self, theta):
-        return np.random.multivariate_normal(mean=theta, cov=0.001*np.eye(self.dim)).astype('float32')
+        return np.random.multivariate_normal(mean=theta, cov=(1.0/self.dim**2)*np.eye(self.dim)).astype('float32')
     
     def sampler(self, im1, im2, lm1, lm2, N=1000):
         im1 = im1.astype('float32')
@@ -76,6 +77,10 @@ class image_registration(object):
                 current_error = proposal_error
                 accepted_samples[accepted_count] = proposal_samp
                 accepted_count += 1
+                
+            plt.plot(lm1[0], lm1[1], 'b.')
+            plt.plot(current_trans[0], current_trans[1], 'r.')
+            plt.show()
             
             
         return accepted_samples
