@@ -7,12 +7,12 @@ Created on Tue May  8 16:24:41 2018
 
 #%% Packages
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Conv2D, InputLayer, MaxPool2D, Flatten
-from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.layers import Dense, Conv2D, InputLayer, MaxPool2D, Flatten, Lambda
 
 from ddtn.transformers.construct_localization_net import get_loc_net
-from ddtn.helper.transformer_util import get_keras_layer
+from ddtn.transformers.transformer_util import get_keras_layer
 from ddtn.data.mnist_getter import get_mnist_distorted
+from ddtn.helper.training_logger import KerasTrainingLogger
 
 import argparse
 
@@ -27,8 +27,8 @@ def _argument_parser():
     parser.add_argument('-bs', action="store", dest="batch_size", type=int, default = 100,
                         help = '''Batch size: Default: 100''')
     parser.add_argument('-tt', action="store", dest="transformer_type", type=str, 
-                        default='affine', help = '''Transformer type to use. 
-                        Choose between: no, affine, cpab, affine_diffio, homografy
+                        default='no', help = '''Transformer type to use. 
+                        Choose between: no, affine, cpab, affine_diffeo, homografy
                         or TPS''')
     res = parser.parse_args()
     args = vars(res)
@@ -46,10 +46,13 @@ def _argument_parser():
 
 #%%
 if __name__ == '__main__':
+    # Get input arguments
     args = _argument_parser()
     
+    # Get some data
     X_train, y_train, X_test, y_test = get_mnist_distorted()
     
+    # Data format
     input_shape=(60,60,1)
         
     # Keras model
@@ -65,6 +68,8 @@ if __name__ == '__main__':
         transformer_layer = get_keras_layer(args['transformer_type'])
         model.add(transformer_layer(localization_net=loc_net, 
                                     output_size=input_shape))
+    else:
+        model.add(Lambda(lambda x: x)) # identity layer -> same model structure
    
     # Construct feature extraction network
     model.add(Conv2D(32, (3,3), activation='relu'))
@@ -85,19 +90,22 @@ if __name__ == '__main__':
     # Get summary of model
     print('Global model')
     model.summary()
-    if args['transformer_type'] != 'no':
-        print('Localization net')
-        loc_net.summary()
-
+    
+    # Training logger
+    direc = './logs2'
+    logger = KerasTrainingLogger(data=X_test[:10],
+                                 name=args['transformer_type'],
+                                 log_dir=direc, 
+                                 trans_layer=0)
+    
     # Fit model
     model.fit(X_train, y_train,
               batch_size=args['batch_size'],
               epochs=args['num_epochs'],
-              verbose=1,
-              validation_data=(X_test, y_test))    
+              validation_data=(X_test, y_test),
+              callbacks=[logger])    
+
+    # Save weights
+    model.save_weights(direc + '/' + args['transformer_type'] + '/weights')
     
-#    # Construct transformer function
-#    trans_func = K.function([model.input], [model.layers[1].output])
-#    
-#    # Feed some data
-#    new_imgs = trans_func([X_train[:10]])[0]
+    

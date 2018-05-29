@@ -17,17 +17,20 @@ import tensorflow as tf
 
 #%%
 class image_registration(object):
+    """ NOT AT ALL SURE IF THIS WORK
+        MCMC sampling for image registration using different transformers
+    """
     def __init__(self, transformer='TPS'):
         self.trans_func = get_transformer(transformer)
         self.dim = get_transformer_dim(transformer)
         self.init = get_transformer_init_weights(1, transformer)[1]
         self.sess = tf.Session()
 
-#    def transform(self, im, theta):
-#        im = im[np.newaxis, :, :, :]
-#        theta = theta[np.newaxis, :]
-#        trans_im = self.trans_func(im, theta, im.shape[1:])
-#        return self.sess.run(trans_im)[0]
+    def transform_img(self, im, theta):
+        im = im[np.newaxis, :, :, :]
+        theta = theta[np.newaxis, :]
+        trans_im = self.trans_func(im, theta, im.shape[1:])
+        return self.sess.run(trans_im)[0]
         
     def transform_lm(self, lm, theta):
         theta = np.reshape(theta, (1, 16, 2))

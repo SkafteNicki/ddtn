@@ -10,7 +10,7 @@ from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import Dense, Flatten
 from tensorflow.python.keras.layers import Conv2D, MaxPool2D
 
-from ddtn.transformers.transformer_util import get_transformer_init_weights
+#from ddtn.transformers.transformer_util import get_transformer_init_weights
 from ddtn.transformers.transformer_util import get_transformer_dim
 
 #%%
@@ -19,8 +19,11 @@ def get_loc_net(input_shape, transformer_name = 'affine'):
     # Get dimension for the last layer
     dim = get_transformer_dim(transformer_name)
     
+    # TODO: find out why the zero weights destroy the affine_diffeo and CPAB
     # Get weights for identity transformer. Note 50=#unit in second last layer
-    weights = get_transformer_init_weights(50, transformer_name)
+    # weights = get_transformer_init_weights(50, transformer_name)
+    
+    # Construct localization net
     locnet = Sequential()    
     locnet.add(Conv2D(16, (3,3), activation='tanh', input_shape=input_shape))
     locnet.add(MaxPool2D(pool_size=(2,2)))
@@ -30,7 +33,7 @@ def get_loc_net(input_shape, transformer_name = 'affine'):
     locnet.add(MaxPool2D(pool_size=(2,2)))
     locnet.add(Flatten())
     locnet.add(Dense(50, activation='tanh'))
-    locnet.add(Dense(dim, activation='linear', weights=weights))
+    locnet.add(Dense(dim, activation='tanh'))
     return locnet    
     
 #%%

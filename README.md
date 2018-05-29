@@ -10,13 +10,14 @@ However, the repo also contains code for other kinds of ST-layers. The following
 transformation models are included:
 
 * Affine transformations
+* Diffiomorphic affine transformations
 * Homography transformations
 * CPAB transformations
 * Thin-Plate-Spline (TPS) transformations
 
 The code is based upon the original implementation of the CPAB transformations by
 Oren Freifeld (Github repo: [cpabDiffeo](https://github.com/freifeld/cpabDiffeo)).
-Additionall, some of the code for doing interpolation is based upon the Tensorflow
+Additionally, some of the code for doing interpolation is based upon the Tensorflow
 implementation of the Spatial Transformer Networks (Github repo: 
 [spatial-transformer-network](https://github.com/kevinzakka/spatial-transformer-network)).
 
@@ -55,35 +56,81 @@ application ect.) we request you to cite the following papers:
 * To use the GPU implementation, you need a nvidia GPU and CUDA + cuDNN installed. 
   See [Tensorflows GPU installation instructions](https://www.tensorflow.org/install/) 
   for more details
+  
+The code was testes running python 3.6, tensorflow 1.8.0 and CUDA 9.0. However, 
+the code should be compatible with tensorflow from version 1.4.0.
 
-The code are only tested on Linux, but should also work on MAC. The code cannot 
-run on Windows at the moments, since the compiled dynamic libraries (.so files) 
-are only combiled for UNIX. If comes up with a way to compile these for windows, 
-please let us know.
+The code should run on all operating system with or without an GPU. If you are on
+Linux or MAC and tensorflow is able to detect your GPU then the fast GPU version
+of the CPAB transformations will be uses. If you are on windows or do have an GPU,
+an slower (and memory consuming) implementation will be used that is written in
+pure tensorflow.
 
 ## Installation
 
-Clone this reposatory to a directory of your choice
+1. Clone this reposatory to a directory of your choice
 ```
 git clone https://github.com/SkafteNicki/ddtn
 ```
-Add this directory to your PYTHONPATH
+2. Add this directory to your PYTHONPATH
 ```
 export PYTHONPATH=$PYTHONPATH:$YOUR_FOLDER_PATH/ddtn
 ```
+3. (optional) If you want to use the fast GPU version their is a good chance that
+you have to recompile the dynamic libraries where the operation is defined. Go to
+the folder 'ddtn/ddtn/cuda/' and type the following in a command prompt
+```
+make clean
+make
+```
 
-## Running code
+## Using the code
 
+Try opening a python command promt and type in the follow command
+```
+import ddtn
+```
+This should give you one of the following outputs
+```
+----------------------------------------------------------------------
+Operating system: linux
+Using the fast cuda implementation for CPAB
+----------------------------------------------------------------------
+or
+----------------------------------------------------------------------
+Operating system: linux
+Using the slow pure tensorflow implementation for CPAB
+----------------------------------------------------------------------
+```
+The reposatory comes with two scripts you can try to run
+``` 
+python play_with_transformers.py <- show what the different transformers can do
+python mnist_classifier.py <- trains a classifier on a distorted mnist dataset
+```
+for both script you can type `-h` after to get the commandline options.
+
+To use the different transformers in your own settings, there are primarily 3
+files that are important
+
+1. `ddtn.transformers.transformers` 
+   
+   Defines methods called tf_'name'_transformer eg. tf_Affine_transformer, tf_CPAB_transformer ect. that as input takes a grid of points and a parametrization and outputs the transformed grid.
+
+2. `ddtn.transformers.transformer_layers`
+
+   Defines methods called ST_'name'_transformer eg. ST_Affine_transformer, ST_CPAB_transformer ect. that as input takes an image, a parametrization and output the transformed image.
+
+3. `ddtn.transformers.keras_layers` 
+
+   Defined keras layers called Spatial'name'Layer eg. SpatialAffineLayer, SpatialCPABLayer ect. that can be incorporated into keras models (main used high-level-api for tensorflow).
 
 ## Known bugs
-1 "Executor failed to create kernel. Not found: Op type not registered 
+1. *"Executor failed to create kernel. Not found: Op type not registered 
 'tf_CPAB_transformer' in binary running on HedonismeBot. Make sure the Op and 
-Kernel are registered in the binary running in this process"
-   `tf.Defun` seems to be working but still give out this error message. Should
-    probably try to find a replacement for `tf.Defun`
-   - This error has something to do with `tf.Defun`, but the code seems to run.
-   It is probably due to the fact that tensorflow sessions freeze the current
-   graph. Will try to find a replacement for `tf.Defun`. Look into `tf.RegisterGradient`
-   at some point.
+Kernel are registered in the binary running in this process"*.
 
+   `tf.Defun` seems to be working but still give out this error message. Should
+    probably try to find a replacement for `tf.Defun`. Has something to do with
+    the fact that tensorflow sessions freeze the current graph. Look into
+    `tf.RegisterGradient` at some point.
 

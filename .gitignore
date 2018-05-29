@@ -3,3 +3,5 @@ __pycache__
 *.pkl
 *.gz
 *.npz
+ddtn/logs
+ddtn/logs2

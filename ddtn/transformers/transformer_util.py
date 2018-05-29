@@ -141,6 +141,7 @@ def get_random_theta(N, transformer_name='affine'):
 
 #%%
 def format_theta(theta, transformer_name):
+    """ Return the right format of parametrization for different transformers"""
     if transformer_name == 'affine' or transformer_name == 'affinediffeo':
         theta = np.reshape(theta, (-1, 2, 3))
     elif transformer_name == 'homografy':

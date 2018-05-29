@@ -18,12 +18,14 @@ from tensorflow.python.client import device_lib
 
 #%%
 def gpu_support():
+    """ Checks for GPU and CUDA support """
     test1 = check_for_gpu()
     test2 = check_cuda_support()
     return (test1 and test2)
 
 #%%
 def check_for_gpu():
+    """ Check if tensorflow has detected a GPU """
     devices = device_lib.list_local_devices()
     gpu = False
     for d in devices:
@@ -32,6 +34,7 @@ def check_for_gpu():
 
 #%%
 def check_cuda_support():
+    """ Check if tensorflow was build with CUDA """
     return tf.test.is_built_with_cuda()
 
 #%%
@@ -76,7 +79,17 @@ def load_basis():
     return basis
 
 #%%
+def debug_printer(string):
+    """ Small debug function """
+    print('\n')
+    print(70*'-')
+    print(string)
+    print(70*'-')
+    print('\n')
+
+#%%
 def get_cat():
+    """ Get cat image """
     direc = get_dir(__file__)
     return plt.imread(direc + '/../cat.jpg')
 
