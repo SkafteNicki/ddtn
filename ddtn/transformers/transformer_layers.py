@@ -149,6 +149,9 @@ def ST_Homografy_transformer(U, theta, out_size):
         # Reshape theta
         theta = tf.reshape(theta, (-1, 3, 3))
     
+        # Make it a valid homografy
+        theta = theta / tf.norm(theta, axis=[1,2], keep_dims=True)
+    
         # Create grid of points
         out_height = out_size[0]
         out_width = out_size[1]
